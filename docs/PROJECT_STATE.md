@@ -3,10 +3,10 @@
 > Atualizar ao final de cada etapa significativa. Esta é a fonte de verdade sobre "onde paramos",
 > não a memória da conversa.
 
-**Fase atual**: Fase 2 — Biblioteca (MVP construído, aguardando confirmação visual do dono do
-produto no preview do Lovable). Fase 0 e Fase 1 concluídas e **confirmadas funcionando de ponta a
-ponta pelo dono do produto** — login e cadastro reais testados no preview do Lovable em
-11/09/2026.
+**Fase atual**: Fase 2 — Biblioteca (MVP construído + upload de PDF/DOCX ampliado, aguardando
+confirmação visual do dono do produto no preview do Lovable). Fase 0 e Fase 1 concluídas e
+**confirmadas funcionando de ponta a ponta pelo dono do produto** — login e cadastro reais
+testados no preview do Lovable em 11/09/2026.
 
 ## Concluído
 
@@ -90,21 +90,41 @@ ponta pelo dono do produto** — login e cadastro reais testados no preview do L
   Lovable, não por SQL — ver `supabase/migrations/README.md`), RLS por dono em tudo, policies de
   Storage por pasta (`{owner_id}/{library_item_id}/{arquivo}`).
 - `src/hooks/use-library.ts`: listar, buscar um item + seus arquivos, criar (com validação —
-  título obrigatório, .txt/.md até 5MB, arquivo ou texto colado — e limpeza automática se o upload
-  falhar no meio do caminho), excluir (remove do Storage e do banco).
+  título obrigatório, arquivo suportado ou texto colado, até 20MB — e limpeza automática se o
+  upload falhar no meio do caminho), excluir (remove do Storage e do banco).
 - `/library` (MR-03): lista real com busca por título/categoria/tag, estado vazio orientativo,
   badges de tipo/autoria/categoria, status de processamento.
 - `/library/new` (MR-04): formulário completo (título, tipo, autoria/origem, categoria, tags, data)
-  - colar texto ou enviar .txt/.md. Extração de texto é imediata e síncrona (trivial para texto
-    puro) — sem fila/job ainda, isso é Fase 3.
+  - colar texto ou enviar arquivo. Extração de texto é imediata e síncrona no navegador — sem
+    fila/job ainda, isso é Fase 3.
 - `/library/$id` (MR-05, versão MVP): cabeçalho com metadados, conteúdo extraído, exclusão com
   confirmação. Abas de Resumo/Memórias/Anotações ficam para quando existir IA analítica (Fase 5+).
-- **Escopo definido como fora desta fase** (formatos além de .txt/.md, filtros avançados por
-  autoria/ano/status/formato combinados, ordenação, paginação, seleção múltipla, coleções) — MVP
-  MR-03/MR-04 primeiro, ampliar depois, conforme `docs/ROADMAP.md`.
+- **Escopo definido como fora desta fase** (filtros avançados por autoria/ano/status/formato
+  combinados, ordenação, paginação, seleção múltipla, coleções) — MVP MR-03/MR-04 primeiro,
+  ampliar depois, conforme `docs/ROADMAP.md`.
 - Build/typecheck/lint passam. Verificado neste sandbox que rotas protegidas continuam redirecionando
   corretamente para `/login`. **Ainda não verificado visualmente com dados reais** (mesma limitação
   de rede do sandbox — ver "Problemas conhecidos").
+
+**Fase 2 — ampliação de formatos de upload (PDF/DOCX)**
+
+- Pedido do dono do produto: tentativa de upload de PDF falhou porque só .txt/.md eram aceitos.
+- `src/lib/document-extraction.ts` (novo): `detectExtension` por sufixo do nome do arquivo,
+  `extractText` despachando para cada formato — `.txt`/`.md` via `file.text()`, `.pdf` via
+  `pdfjs-dist` (`getDocument` + `getTextContent` por página, worker carregado por `?url`), `.docx`
+  via `mammoth` (`extractRawText`). Mensagens de erro em português, incluindo aviso específico para
+  PDF escaneado (sem camada de texto — OCR fica para depois).
+- `use-library.ts` atualizado para usar `detectExtension`/`extractText` em vez do check fixo
+  .txt/.md; limite de tamanho subiu de 5MB para 20MB (`MAX_FILE_SIZE_BYTES`).
+- `/library/new`: `accept` do input de arquivo ampliado (extensões + MIME types de PDF/DOCX), texto
+  de ajuda e placeholder atualizados.
+- Dependências novas: `pdfjs-dist@6.3.289`, `mammoth@1.12.2` — ambas importadas dinamicamente
+  (`import()`) dentro de `document-extraction.ts`, confirmadas em chunks separados no
+  `bun run build` (não engordam o bundle principal para quem só usa texto colado/.txt/.md).
+  `bun run typecheck`/`lint`/`build` passam; checagem no navegador (Playwright, servidor local)
+  sem erros de página e com o redirecionamento de rota protegida ainda correto.
+- **Ainda não testado com dados reais** — mesma limitação de rede do sandbox; pendente o dono do
+  produto tentar de novo o upload de PDF/DOCX no preview do Lovable.
 
 ## Em andamento
 
