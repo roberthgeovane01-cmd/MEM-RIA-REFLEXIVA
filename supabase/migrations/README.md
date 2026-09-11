@@ -12,6 +12,16 @@ Esta pasta tem duas "gerações" de migrations, por uma razão específica — v
   são as que refletem o schema em produção. Contêm o mesmo SQL das duas primeiras, mais `GRANT`s
   extras que o Postgres gerenciado do Lovable exige.
 
+- `20260911190000_create_library.sql` (meu, Fase 2 — Biblioteca) e
+  `20260911183240_e0ebcba7-*.sql` (UUID, gerado pelo Lovable) são o mesmo par: o meu tem comentários
+  completos e é a versão canônica para leitura; o do Lovable é o que ele realmente executou. Uma
+  diferença real desta vez: `insert into storage.buckets` foi rejeitado pela migration gerenciada
+  do Lovable — o bucket `library-originals` foi criado por uma ferramenta própria dele
+  (`supabase--storage_create_bucket`), não por SQL. O meu arquivo documenta isso em comentário e
+  mantém o `insert` comentado, para quem rodar via Supabase CLI num projeto comum.
+
 Daqui para frente: continue escrevendo migrations aqui normalmente (é a fonte de verdade), mas
 aplique-as pedindo ao agente do Lovable para executá-las — ver `CLAUDE.md` § "Como aplicar
-migrations". Não presuma que um `project_id` específico do Supabase é estável.
+migrations". Não presuma que um `project_id` específico do Supabase é estável, e não presuma que
+`insert into storage.buckets` vai funcionar — pode ser necessário pedir ao Lovable para criar o
+bucket por fora da migration.

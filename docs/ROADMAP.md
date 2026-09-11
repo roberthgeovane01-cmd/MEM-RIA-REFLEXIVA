@@ -9,8 +9,10 @@
       fundação de autenticação (`profiles` + RLS + trigger de signup).
 - [x] **Fase 1 — Auth + App Shell**: login (e-mail/senha + criar conta + recuperar senha),
       sessão, proteção de rotas, navegação (sidebar/bottom bar), Home vazia (MR-02).
-- [ ] **Fase 2 — Biblioteca**: tabela `library_items`/`library_files`, Storage, upload, organização,
-      busca simples, detalhe do documento.
+- [x] **Fase 2 — Biblioteca (MVP)**: `library_items`/`library_files`, Storage (`library-originals`),
+      upload (.txt/.md) ou texto colado, listagem com busca, Detalhe do Documento (MR-05, versão
+      MVP). Aguardando confirmação do dono do produto no preview — ver `docs/PROJECT_STATE.md`.
+      Fora do MVP por escolha: mais formatos de arquivo, filtros avançados combinados, coleções.
 - [ ] **Fase 3 — Ingestão**: extração, `document_sections`, `document_chunks`, `processing_jobs`,
       estados explícitos de status.
 - [ ] **Fase 4 — RAG**: `chunk_embeddings`, full-text search, busca híbrida, evidências.
@@ -42,6 +44,7 @@ módulo em detalhe (ver `docs/specs/README.md`).
 
 ## Próximo passo concreto
 
-Iniciar a **Fase 2 — Biblioteca** (MR-03 recebido): modelar e migrar
-`library_items`/`library_files`, criar os buckets de Storage, e construir upload + listagem +
-busca simples + Detalhe do Documento (MR-05).
+1. Confirmar a Fase 2 (MVP) com o dono do produto testando no preview do Lovable.
+2. Iniciar a **Fase 3 — Ingestão**: pipeline de processamento (extração estruturada,
+   `document_sections`, `document_chunks`, `processing_jobs` com estados explícitos), e ampliar
+   formatos aceitos (DOCX/PDF com camada de texto).
