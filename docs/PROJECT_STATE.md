@@ -3,9 +3,9 @@
 > Atualizar ao final de cada etapa significativa. Esta é a fonte de verdade sobre "onde paramos",
 > não a memória da conversa.
 
-**Fase atual**: Fase 4 — RAG (construída: embeddings via OpenAI + busca híbrida; aguardando o dono
-do produto cadastrar `OPENAI_API_KEY` e o Lovable aplicar a migration/deployar as Edge Functions).
-Fase 0, Fase 1, Fase 2 e Fase 3 confirmadas funcionando de ponta a ponta pelo dono do produto.
+**Fase atual**: Fase 4 — RAG (construída e **aplicada/deployada** — migration, `generate-embeddings`
+e `search` no ar, `OPENAI_API_KEY` cadastrado). Aguardando confirmação visual do dono do produto no
+preview. Fase 0, Fase 1, Fase 2 e Fase 3 confirmadas funcionando de ponta a ponta.
 
 ## Concluído
 
@@ -187,13 +187,15 @@ Fase 0, Fase 1, Fase 2 e Fase 3 confirmadas funcionando de ponta a ponta pelo do
   fonte).
 - `bun run typecheck`/`lint`/`build` passam limpos (Edge Functions ficam fora do `tsconfig`/ESLint
   do app — são Deno, não Vite/React).
+- **Aplicada e deployada** pelo agente do Lovable: migration confirmada (colunas de embedding,
+  índice HNSW e função `search_document_chunks` verificados via SQL), `generate-embeddings` e
+  `search` publicadas e respondendo a uma checagem não destrutiva, `OPENAI_API_KEY` já estava
+  cadastrado pelo dono do produto, advisor de segurança sem avisos novos.
 
 ## Em andamento
 
-- Aguardando o dono do produto cadastrar `OPENAI_API_KEY` em Project Settings → Secrets no editor
-  do Lovable, e o agente do Lovable aplicar `20260911210000_create_hybrid_search.sql` + deployar
-  `generate-embeddings` e `search`. Depois disso: criar um item novo no preview, ver o embedding
-  rodar (status passa por `embedding` e volta a `completed`), e testar "Buscar no conteúdo".
+- Aguardando o dono do produto confirmar no preview: criar um item novo, ver o embedding rodar
+  (status passa por `embedding` e volta a `completed`), e testar "Buscar no conteúdo" em `/library`.
 
 ## Próximo
 
