@@ -14,8 +14,11 @@
       Documento (MR-05, versão MVP). **Confirmada pelo dono do produto** no preview do Lovable em
       11/09/2026 — ver `docs/PROJECT_STATE.md`. Fora do MVP por escolha: PDF escaneado/OCR, filtros
       avançados combinados, coleções.
-- [ ] **Fase 3 — Ingestão**: extração, `document_sections`, `document_chunks`, `processing_jobs`,
-      estados explícitos de status.
+- [x] **Fase 3 — Ingestão**: `document_sections`, `document_chunks`, `processing_jobs`, estados
+      explícitos de status (`uploaded → queued → extracting → structuring → chunking → completed`
+      hoje; `embedding/extracting_memory/updating_profile` chegam com as fases que os usam).
+      Estruturação e chunking rodam no cliente, não numa fila/Edge Function — ver
+      `docs/DECISIONS.md`. Aguardando confirmação do dono do produto no preview do Lovable.
 - [ ] **Fase 4 — RAG**: `chunk_embeddings`, full-text search, busca híbrida, evidências.
 - [ ] **Fase 5 — Memória**: `memory_items`, `memory_evidence`, `memory_relations`.
 - [ ] **Fase 6 — Meu Cérebro**: `author_traits`, `author_profile_versions`, evidências, feedback.
@@ -30,8 +33,8 @@
 LOGIN → UPLOAD TXT → ARMAZENAR → PROCESSAR → CRIAR CHUNKS → BUSCAR → MOSTRAR RESULTADO COM FONTE
 ```
 
-Ampliação de formatos (DOCX, PDF com camada de texto) já concluída antes da Fase 3 — extração
-síncrona no cliente, sem fila/job ainda (isso é parte da Fase 3).
+Ampliação de formatos (DOCX, PDF com camada de texto) concluída na Fase 2. Estrutura + chunks
+(Fase 3) concluídos — falta a Fase 4 (busca) para fechar a cadeia completa.
 
 ## Segundo vertical slice
 
@@ -46,6 +49,8 @@ módulo em detalhe (ver `docs/specs/README.md`).
 
 ## Próximo passo concreto
 
-1. Iniciar a **Fase 3 — Ingestão**: pipeline de processamento assíncrono (extração estruturada,
-   `document_sections`, `document_chunks`, `processing_jobs` com estados explícitos) — a extração
-   de texto hoje é síncrona no navegador, sem fila.
+1. Confirmar a Fase 3 (estrutura + chunks) com o dono do produto testando no preview do Lovable.
+2. Iniciar a **Fase 4 — RAG**: `chunk_embeddings` (ou embutido em `document_chunks`), full-text
+   search sobre `document_chunks.search_vector` (já existe desde a Fase 3), busca híbrida, camada de
+   IA (`EmbeddingProvider`) — este é o primeiro passo que precisa mover execução para o backend
+   (segredo de provedor de IA), ver `docs/DECISIONS.md`.

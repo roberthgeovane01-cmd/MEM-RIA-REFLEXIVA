@@ -257,3 +257,52 @@ real (definição de pronto em `CLAUDE.md`).
 
 **CONSEQUENCES**: O modelo completo está documentado em `docs/DATA_MODEL.md` como referência para
 as próximas fases, mas cada tabela só ganha migration quando sua fase começa.
+
+---
+
+## 2026-09-11 — Fase 3 (Ingestão): pipeline síncrono no cliente, não fila/Edge Function
+
+**DECISION**: `document_sections`/`document_chunks` são construídos por funções puras e
+determinísticas (`src/lib/document-structuring.ts`) rodando no navegador logo após o upload
+(`src/lib/document-processing.ts`, chamado de forma "fire-and-forget" por `use-library.ts`), e não
+por uma Supabase Edge Function disparada via fila (`pgmq`)/worker, como o desenho geral do §39-46
+de `docs/specs/MR-ARQ-arquitetura-tecnica-mestra.md` descreve para o pipeline de processamento
+assíncrono. A tabela `processing_jobs` e o enum completo de status (`uploaded → queued → extracting
+→ structuring → chunking → embedding → extracting_memory → updating_profile → completed/failed`)
+já existem desde já, exatamente como documentados em `docs/DATA_MODEL.md` — só a **execução** dos
+passos desta fase é que roda no cliente.
+
+**CONTEXT**: Estruturação (detectar capítulo/seção/subtítulo por heading) e chunking (agrupar
+parágrafos respeitando a estrutura, só quebrar por tamanho como último recurso) são operações
+determinísticas sobre texto já extraído — não chamam nenhum provedor de IA e não usam nenhum
+segredo. Montar fila real (`pgmq` + `pg_cron` + Edge Function worker) exigiria pedir ao agente do
+Lovable para provisionar e testar Edge Functions, um passo com atrito nesta sessão (ver a seção
+"Como aplicar migrations" em `CLAUDE.md`) e sem precedente ainda estabelecido, para um ganho que só
+importa quando o processamento realmente precisar rodar fora do navegador.
+
+**OPTIONS**: (1) Edge Function `ingest-document` + fila `pgmq`, disparada de forma assíncrona real,
+como o desenho arquitetural completo descreve; (2) função client-side, chamada sem `await` logo
+após o upload, atualizando `processing_jobs`/`library_items.processing_status` diretamente via
+cliente Supabase autenticado (RLS já garante isolamento por dono).
+
+**CHOICE**: Opção 2 para a Fase 3. A Opção 1 (ou uma equivalente com fila persistente) passa a ser
+obrigatória a partir do momento em que um passo do pipeline precisar de um provedor de IA com
+segredo (`embedding` — Fase 4 — e daí em diante) — `docs/SECURITY.md`/`CLAUDE.md` já proíbem
+segredo de IA no frontend, então essa mudança de camada não é opcional quando chegar a hora.
+
+**WHY**: "Não construir 50% de cada módulo" — investir em infraestrutura de fila real antes de
+haver qualquer passo que precise dela é complexidade adiantada sem benefício imediato, para um app
+de um usuário só. Manter `processing_jobs` e o enum de status completos desde já significa que
+quando a execução migrar para o backend (Fase 4), a interface e o modelo de dados não mudam — só
+quem escreve nas mesmas tabelas muda (Edge Function com `service_role` em vez do cliente
+autenticado).
+
+**CONSEQUENCES**: Processamento não sobrevive ao fechamento da aba antes de terminar (diferente de
+uma fila real, que sobrevive). Para o tamanho de documento do MVP (até 20MB de texto, sem OCR/IA),
+isso é rápido o bastante para não ser um problema prático observável. `document_chunks.token_count`
+é uma estimativa (`tamanho / 4`), não uma contagem real de tokens — fica correta quando a Fase 4
+escolher um modelo/tokenizer real. `document_chunks.page_start`/`page_end` e
+`document_sections.start_page`/`end_page` ficam `null` por enquanto — a extração de PDF
+(`src/lib/document-extraction.ts`) já junta todas as páginas num único texto antes deste pipeline
+rodar, então a proveniência por página ainda não é rastreada no nível de chunk/seção (só no nível
+do arquivo). Melhorar isso é um passo futuro independente, não bloqueia a Fase 3.

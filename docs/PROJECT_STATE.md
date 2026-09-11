@@ -3,9 +3,10 @@
 > Atualizar ao final de cada etapa significativa. Esta é a fonte de verdade sobre "onde paramos",
 > não a memória da conversa.
 
-**Fase atual**: Fase 2 — Biblioteca **concluída e confirmada pelo dono do produto** no preview do
-Lovable em 11/09/2026, incluindo o upload de PDF/DOCX. Fase 0, Fase 1 e Fase 2 confirmadas
-funcionando de ponta a ponta. Próximo passo: Fase 3 — Ingestão.
+**Fase atual**: Fase 3 — Ingestão (construída: `document_sections`/`document_chunks`/
+`processing_jobs`, pipeline de estruturação + chunking rodando no cliente — ver
+`docs/DECISIONS.md`). Aguardando confirmação visual do dono do produto no preview do Lovable. Fase
+0, Fase 1 e Fase 2 confirmadas funcionando de ponta a ponta pelo dono do produto.
 
 ## Concluído
 
@@ -125,18 +126,49 @@ funcionando de ponta a ponta. Próximo passo: Fase 3 — Ingestão.
 - **Confirmado pelo dono do produto** no preview do Lovable em 11/09/2026 — upload de PDF/DOCX
   testado e aprovado.
 
+**Fase 3 — Ingestão**
+
+- Migration `20260911200000_create_ingestion_pipeline.sql`: `document_sections` (livro → parte →
+  capítulo → seção → subtítulo → página, auto-referência para hierarquia), `document_chunks`
+  (com `search_vector` gerado já pronto para a Fase 4, `unique (library_item_id, chunk_index)`),
+  `processing_jobs` (enum completo de status do `docs/DATA_MODEL.md`). RLS por dono em tudo.
+  `library_items.processing_status` ganhou o enum completo (`processed` virou `completed` nos
+  dados existentes).
+- `src/lib/document-structuring.ts`: `buildSections` (detecta headings `#`/`##`/`###`… estilo
+  Markdown; sem heading nenhum, o documento inteiro vira uma seção só — nunca dividido às cegas) e
+  `buildChunks` (agrupa parágrafos até ~1200 caracteres, respeitando seção e parágrafo; só quebra
+  um parágrafo isolado se ele sozinho passar do limite). Nenhuma IA envolvida — determinístico.
+- `src/lib/document-processing.ts`: cria a `processing_jobs` row e roda o pipeline
+  (`extracting → structuring → chunking → completed`/`failed`), atualizando
+  `processing_jobs.status` e `library_items.processing_status` juntos a cada passo. Chamado sem
+  `await` (fire-and-forget) logo depois do upload — ver `docs/DECISIONS.md` para por que isso roda
+  no cliente nesta fase, e não numa fila/Edge Function.
+- `use-library.ts`: `useLibraryItem` agora também busca seções, contagem de chunks e o job mais
+  recente, com `refetchInterval` enquanto o status não for terminal (`completed`/`failed`);
+  `useLibraryItems` também repolling enquanto algum item está processando. Exclusão agora também
+  remove a `processing_jobs` row (sem FK — referência solta por design, ver a migration).
+- `/library`, `/library/$id`: rótulos em português para todos os estados do pipeline (não só
+  "Carregando..."); `/library/$id` ganhou um selo de status no cabeçalho, alerta com a mensagem de
+  erro quando `failed`, e uma seção "Estrutura e indexação" (lista de seções detectadas + contagem
+  de trechos) quando `completed`.
+- Build/typecheck/lint a confirmar após o Lovable aplicar a migration e regenerar `types.ts`
+  (as novas tabelas ainda não existem nos tipos gerados até isso acontecer).
+
 ## Em andamento
 
-- Nenhum item aberto na Fase 2. Próximo passo é iniciar a Fase 3.
+- Aguardando o Lovable aplicar `20260911200000_create_ingestion_pipeline.sql` e regenerar
+  `src/integrations/supabase/types.ts`; depois disso, rodar typecheck/lint/build e verificar no
+  preview (criar um item, ver o status avançar, abrir o detalhe e ver a estrutura detectada).
+- Depois: aguardar o dono do produto confirmar a Fase 3 no preview antes de iniciar a Fase 4.
 
 ## Próximo
 
-1. **Fase 3 — Ingestão**: pipeline de processamento real (`document_sections`, `document_chunks`,
-   `processing_jobs`), estados explícitos de status (a extração hoje é síncrona no navegador, sem
-   fila).
-2. Depois: **Fase 4 — RAG** (embeddings, full-text search, busca híbrida) para fechar o primeiro
-   vertical slice completo — login → upload TXT → armazenar → processar → chunks → buscar → mostrar
-   resultado com fonte.
+1. Confirmar a Fase 3 com o dono do produto.
+2. **Fase 4 — RAG**: `chunk_embeddings` (ou embutido em `document_chunks`), full-text search sobre
+   `document_chunks.search_vector` (já existe), busca híbrida, `EmbeddingProvider` — primeiro passo
+   que precisa de segredo de IA, logo primeiro passo que precisa mesmo de backend real (Edge
+   Function), fechando o primeiro vertical slice completo — login → upload → armazenar → processar
+   → chunks → buscar → mostrar resultado com fonte.
 
 ## Problemas conhecidos / dívida técnica
 

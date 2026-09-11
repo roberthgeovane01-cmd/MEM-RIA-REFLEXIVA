@@ -20,6 +20,12 @@ Esta pasta tem duas "gerações" de migrations, por uma razão específica — v
   (`supabase--storage_create_bucket`), não por SQL. O meu arquivo documenta isso em comentário e
   mantém o `insert` comentado, para quem rodar via Supabase CLI num projeto comum.
 
+- `20260911200000_create_ingestion_pipeline.sql` (meu, Fase 3 — Ingestão): `document_sections`,
+  `document_chunks`, `processing_jobs` + alargamento do enum de `library_items.processing_status`.
+  Pendente de aplicação pelo Lovable no momento em que este arquivo foi commitado — quando aplicada,
+  este parágrafo será atualizado com o nome do arquivo UUID correspondente gerado por ele (mesmo
+  padrão das entradas acima).
+
 Daqui para frente: continue escrevendo migrations aqui normalmente (é a fonte de verdade), mas
 aplique-as pedindo ao agente do Lovable para executá-las — ver `CLAUDE.md` § "Como aplicar
 migrations". Não presuma que um `project_id` específico do Supabase é estável, e não presuma que

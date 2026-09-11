@@ -19,10 +19,12 @@
 
 ## Status atual
 
-| Tabela                 | Status                                                                                                                              |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles`             | ✅ Migrada (Fase 0 — fundação de autenticação)                                                                                      |
-| Todas as demais abaixo | 📋 Planejada — serão migradas fase a fase (Biblioteca → Ingestão → RAG → Memória → Meu Cérebro → Reflexões), nunca todas de uma vez |
+| Tabela                                                    | Status                                                                                                        |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `profiles`                                                | ✅ Migrada (Fase 0 — fundação de autenticação)                                                                |
+| `library_items`, `library_files`                          | ✅ Migradas (Fase 2 — Biblioteca)                                                                             |
+| `document_sections`, `document_chunks`, `processing_jobs` | ✅ Migradas (Fase 3 — Ingestão). Execução do pipeline roda no cliente por enquanto — ver `docs/DECISIONS.md`. |
+| Todas as demais abaixo                                    | 📋 Planejada — serão migradas fase a fase (RAG → Memória → Meu Cérebro → Reflexões), nunca todas de uma vez   |
 
 ---
 
@@ -74,6 +76,10 @@ Um item pode ter múltiplas versões de arquivo sem perder o original.
 ---
 
 ## Fase 3 — Ingestão / estrutura documental
+
+> Migrada e com pipeline funcionando (estruturação + chunking), mas a **execução** hoje é
+> client-side e síncrona, não uma fila/Edge Function real — ver `docs/DECISIONS.md` (11/09/2026,
+> "Fase 3: pipeline síncrono no cliente") para o raciocínio e quando isso muda.
 
 ### `document_sections`
 
