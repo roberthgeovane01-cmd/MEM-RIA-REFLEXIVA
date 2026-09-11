@@ -151,15 +151,22 @@
   "Carregando..."); `/library/$id` ganhou um selo de status no cabeçalho, alerta com a mensagem de
   erro quando `failed`, e uma seção "Estrutura e indexação" (lista de seções detectadas + contagem
   de trechos) quando `completed`.
-- Build/typecheck/lint a confirmar após o Lovable aplicar a migration e regenerar `types.ts`
-  (as novas tabelas ainda não existem nos tipos gerados até isso acontecer).
+- Migration aplicada pelo agente do Lovable na terceira tentativa: as duas primeiras falharam por
+  erro de ordenação entre o `update` que renomeia `processed → completed` e o `alter table` que
+  alarga a constraint (`check` é validado imediatamente, não no commit) — corrigido no próprio
+  arquivo `20260911200000_create_ingestion_pipeline.sql`, sem versões antigas mantidas por não
+  terem chegado a ser aplicadas de verdade. Desta vez o Lovable não commitou um arquivo UUID
+  espelho (só regenerou `types.ts`) — ver `supabase/migrations/README.md`.
+- Confirmado pelo próprio agente do Lovable: as 3 tabelas existem com RLS ativo e 4 policies cada,
+  a constraint aceita os 10 estados, nenhum `GRANT` extra foi necessário, nenhum bucket criado,
+  advisor/linter sem avisos novos.
+- `types.ts` sincronizado de volta e formatado; `bun run typecheck`/`lint`/`build` passam limpos.
 
 ## Em andamento
 
-- Aguardando o Lovable aplicar `20260911200000_create_ingestion_pipeline.sql` e regenerar
-  `src/integrations/supabase/types.ts`; depois disso, rodar typecheck/lint/build e verificar no
-  preview (criar um item, ver o status avançar, abrir o detalhe e ver a estrutura detectada).
-- Depois: aguardar o dono do produto confirmar a Fase 3 no preview antes de iniciar a Fase 4.
+- Aguardando o dono do produto testar `/library/new` (criar um item) e `/library/$id` (ver o status
+  avançar, abrir o detalhe e conferir a "Estrutura e indexação") no preview do Lovable, antes de
+  declarar a Fase 3 concluída.
 
 ## Próximo
 
