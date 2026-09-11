@@ -29,14 +29,17 @@ Esta pasta tem duas "gerações" de migrations, por uma razão específica — v
   Lovable não commitou um arquivo UUID espelho** — só regenerou `types.ts` diretamente; este arquivo
   é a única versão e é byte-idêntica ao que foi lido e executado (confirmado na resposta do agente).
 
-- `20260911210000_create_hybrid_search.sql` (meu, Fase 4 — RAG): extensão `pgvector`, colunas de
-  embedding em `document_chunks`, índice HNSW, função `search_document_chunks`. A extensão
-  `pgvector` em si já foi habilitada ad hoc pelo Lovable antes deste arquivo existir (pedido
-  separado, para confirmar disponibilidade antes de desenhar o resto) — o `create extension if not
-exists` aqui é idempotente e só documenta isso como fonte de verdade. Pendente de aplicação do
-  restante (colunas/índice/função) e do deploy das Edge Functions
-  (`supabase/functions/generate-embeddings`, `supabase/functions/search`) no momento em que este
-  arquivo foi commitado — depende do dono do produto cadastrar `OPENAI_API_KEY` primeiro.
+- `20260911210000_create_hybrid_search.sql` (meu, Fase 4 — RAG) e
+  `20260911200926_ee251dcc-*.sql` (UUID, gerado pelo Lovable) são o mesmo par — byte-idênticos
+  (só uma newline final de diferença). `20260911195649_c82c90d5-*.sql` e
+  `20260911195702_587b1481-*.sql` (UUID, também do Lovable, sem contraparte minha) são os dois
+  passos que habilitaram a extensão `pgvector` ad hoc, antes deste arquivo existir (pedido
+  separado, para confirmar disponibilidade antes de desenhar o resto) — meu arquivo repete o
+  `create extension if not exists` de forma idempotente só para ficar completo e re-executável.
+  Aplicada com sucesso; as Edge Functions `generate-embeddings` e `search` foram deployadas no
+  mesmo momento, e `OPENAI_API_KEY` já estava cadastrado — confirmado pelo agente do Lovable
+  (colunas de embedding, índice HNSW e função `search_document_chunks` verificados via SQL; ambas
+  as funções responderam a uma checagem não destrutiva; advisor sem avisos novos).
 
 Daqui para frente: continue escrevendo migrations aqui normalmente (é a fonte de verdade), mas
 aplique-as pedindo ao agente do Lovable para executá-las — ver `CLAUDE.md` § "Como aplicar

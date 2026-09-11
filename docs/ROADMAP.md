@@ -23,8 +23,9 @@
 - [x] **Fase 4 — RAG**: embeddings (OpenAI, embutidos em `document_chunks`), full-text search
       (já existia desde a Fase 3), busca híbrida (RRF via RPC `search_document_chunks`),
       `EmbeddingProvider` abstraído. Primeiras Edge Functions do projeto
-      (`generate-embeddings`, `search`) — ver `docs/DECISIONS.md`. Aguardando o dono do produto
-      cadastrar `OPENAI_API_KEY` e confirmar no preview do Lovable.
+      (`generate-embeddings`, `search`) — ver `docs/DECISIONS.md`. Migration aplicada e Edge
+      Functions deployadas, `OPENAI_API_KEY` cadastrado. Aguardando confirmação do dono do produto
+      no preview do Lovable.
 - [ ] **Fase 5 — Memória**: `memory_items`, `memory_evidence`, `memory_relations`.
 - [ ] **Fase 6 — Meu Cérebro**: `author_traits`, `author_profile_versions`, evidências, feedback.
 - [ ] **Fase 7 — Reflexões**: fluxo de 8–9 etapas, retrieval auditável, conflitos, plano, geração,
@@ -54,8 +55,6 @@ módulo em detalhe (ver `docs/specs/README.md`).
 
 ## Próximo passo concreto
 
-1. Dono do produto cadastra `OPENAI_API_KEY` (Project Settings → Secrets no Lovable); Lovable aplica
-   a migration da Fase 4 e deploya `generate-embeddings`/`search`.
-2. Confirmar a Fase 4 no preview: criar um item, ver o embedding rodar, testar "Buscar no conteúdo".
-3. Depois: Fase 5 — Memória, ou reforços da Fase 4 (reprocessar itens antigos sem embeddings,
+1. Confirmar a Fase 4 no preview: criar um item, ver o embedding rodar, testar "Buscar no conteúdo".
+2. Depois: Fase 5 — Memória, ou reforços da Fase 4 (reprocessar itens antigos sem embeddings,
    deep-link para o trecho exato dentro de `/library/$id`).
