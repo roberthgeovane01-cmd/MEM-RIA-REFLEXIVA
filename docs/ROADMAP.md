@@ -18,7 +18,8 @@
       explícitos de status (`uploaded → queued → extracting → structuring → chunking → completed`
       hoje; `embedding/extracting_memory/updating_profile` chegam com as fases que os usam).
       Estruturação e chunking rodam no cliente, não numa fila/Edge Function — ver
-      `docs/DECISIONS.md`. Aguardando confirmação do dono do produto no preview do Lovable.
+      `docs/DECISIONS.md`. **Confirmada pelo dono do produto** com dado real no preview do Lovable
+      em 11/09/2026 — ver `docs/PROJECT_STATE.md`.
 - [ ] **Fase 4 — RAG**: `chunk_embeddings`, full-text search, busca híbrida, evidências.
 - [ ] **Fase 5 — Memória**: `memory_items`, `memory_evidence`, `memory_relations`.
 - [ ] **Fase 6 — Meu Cérebro**: `author_traits`, `author_profile_versions`, evidências, feedback.
@@ -49,8 +50,7 @@ módulo em detalhe (ver `docs/specs/README.md`).
 
 ## Próximo passo concreto
 
-1. Confirmar a Fase 3 (estrutura + chunks) com o dono do produto testando no preview do Lovable.
-2. Iniciar a **Fase 4 — RAG**: `chunk_embeddings` (ou embutido em `document_chunks`), full-text
+1. Iniciar a **Fase 4 — RAG**: `chunk_embeddings` (ou embutido em `document_chunks`), full-text
    search sobre `document_chunks.search_vector` (já existe desde a Fase 3), busca híbrida, camada de
    IA (`EmbeddingProvider`) — este é o primeiro passo que precisa mover execução para o backend
    (segredo de provedor de IA), ver `docs/DECISIONS.md`.
