@@ -22,9 +22,12 @@ Esta pasta tem duas "gerações" de migrations, por uma razão específica — v
 
 - `20260911200000_create_ingestion_pipeline.sql` (meu, Fase 3 — Ingestão): `document_sections`,
   `document_chunks`, `processing_jobs` + alargamento do enum de `library_items.processing_status`.
-  Pendente de aplicação pelo Lovable no momento em que este arquivo foi commitado — quando aplicada,
-  este parágrafo será atualizado com o nome do arquivo UUID correspondente gerado por ele (mesmo
-  padrão das entradas acima).
+  As duas primeiras tentativas de aplicação falharam por erro de ordenação entre o `UPDATE` que
+  renomeia `processed` → `completed` e o `ALTER TABLE` que alarga a constraint (`CHECK` é validado
+  imediatamente, não no commit) — corrigidas neste mesmo arquivo, sem versões antigas mantidas por
+  não terem sido aplicadas de verdade. Aplicada com sucesso na terceira tentativa. **Desta vez o
+  Lovable não commitou um arquivo UUID espelho** — só regenerou `types.ts` diretamente; este arquivo
+  é a única versão e é byte-idêntica ao que foi lido e executado (confirmado na resposta do agente).
 
 Daqui para frente: continue escrevendo migrations aqui normalmente (é a fonte de verdade), mas
 aplique-as pedindo ao agente do Lovable para executá-las — ver `CLAUDE.md` § "Como aplicar
