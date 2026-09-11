@@ -3,7 +3,10 @@
 > Atualizar ao final de cada etapa significativa. Esta é a fonte de verdade sobre "onde paramos",
 > não a memória da conversa.
 
-**Fase atual**: Fase 1 — Auth + App Shell (concluída) → prestes a iniciar Fase 2 (Biblioteca).
+**Fase atual**: Fase 2 — Biblioteca (MVP construído, aguardando confirmação visual do dono do
+produto no preview do Lovable). Fase 0 e Fase 1 concluídas e **confirmadas funcionando de ponta a
+ponta pelo dono do produto** — login e cadastro reais testados no preview do Lovable em
+11/09/2026.
 
 ## Concluído
 
@@ -80,28 +83,51 @@
   do Lovable para executá-las no backend que ele tem conectado — ver `CLAUDE.md` § "Como aplicar
   migrations".
 
+**Fase 2 — Biblioteca (MVP)**
+
+- Migration aplicada (pelo agente do Lovable, fluxo já estabelecido): `library_items`,
+  `library_files`, bucket privado `library-originals` (criado pela ferramenta de Storage do
+  Lovable, não por SQL — ver `supabase/migrations/README.md`), RLS por dono em tudo, policies de
+  Storage por pasta (`{owner_id}/{library_item_id}/{arquivo}`).
+- `src/hooks/use-library.ts`: listar, buscar um item + seus arquivos, criar (com validação —
+  título obrigatório, .txt/.md até 5MB, arquivo ou texto colado — e limpeza automática se o upload
+  falhar no meio do caminho), excluir (remove do Storage e do banco).
+- `/library` (MR-03): lista real com busca por título/categoria/tag, estado vazio orientativo,
+  badges de tipo/autoria/categoria, status de processamento.
+- `/library/new` (MR-04): formulário completo (título, tipo, autoria/origem, categoria, tags, data)
+  - colar texto ou enviar .txt/.md. Extração de texto é imediata e síncrona (trivial para texto
+    puro) — sem fila/job ainda, isso é Fase 3.
+- `/library/$id` (MR-05, versão MVP): cabeçalho com metadados, conteúdo extraído, exclusão com
+  confirmação. Abas de Resumo/Memórias/Anotações ficam para quando existir IA analítica (Fase 5+).
+- **Escopo definido como fora desta fase** (formatos além de .txt/.md, filtros avançados por
+  autoria/ano/status/formato combinados, ordenação, paginação, seleção múltipla, coleções) — MVP
+  MR-03/MR-04 primeiro, ampliar depois, conforme `docs/ROADMAP.md`.
+- Build/typecheck/lint passam. Verificado neste sandbox que rotas protegidas continuam redirecionando
+  corretamente para `/login`. **Ainda não verificado visualmente com dados reais** (mesma limitação
+  de rede do sandbox — ver "Problemas conhecidos").
+
 ## Em andamento
 
-- Nenhuma tarefa de código em andamento no momento — Fase 1 (+ hotfix pós-merge) fechada, aguardando
-  início da Fase 2.
+- Aguardando o dono do produto testar `/library` no preview do Lovable com uma conta real (criar um
+  item, ver a lista, abrir o detalhe, excluir) antes de declarar a Fase 2 (MVP) concluída.
 
 ## Próximo
 
-1. **Fase 2 — Biblioteca** (MR-03 recebido, ver `docs/ROADMAP.md`): modelar e migrar
-   `library_items`/`library_files`, criar buckets de Storage, construir upload + listagem + busca
-   simples + Detalhe do Documento (MR-05).
-2. Depois: pipeline de ingestão (Fase 3) e o primeiro vertical slice completo — login → upload TXT
-   → armazenar → processar → chunks → buscar → mostrar resultado com fonte.
+1. Confirmar Fase 2 (MVP) com o dono do produto.
+2. **Fase 3 — Ingestão**: pipeline de processamento real (`document_sections`, `document_chunks`,
+   `processing_jobs`), formatos além de .txt/.md (Markdown já funciona; DOCX/PDF vêm depois),
+   estados explícitos de status.
+3. Depois: **Fase 4 — RAG** (embeddings, full-text search, busca híbrida) para fechar o primeiro
+   vertical slice completo — login → upload TXT → armazenar → processar → chunks → buscar → mostrar
+   resultado com fonte.
 
 ## Problemas conhecidos / dívida técnica
 
-- **Login de verdade ainda não foi testado por mim ponta a ponta com a API real do Supabase** — o
-  ambiente de execução deste agente bloqueia conexões de saída diretas para `*.supabase.co`
-  (política de egress do sandbox, confirmada via `/root/.ccr/README.md`; não é um problema do
-  app). O agente do Lovable confirmou schema, RLS e alcançabilidade corretos no backend realmente
-  conectado; a UI foi verificada em navegador real neste sandbox. O que ainda falta é alguém (o
-  dono do produto, ou o preview do Lovable) confirmar visualmente que cadastro/login funcionam de
-  ponta a ponta no ambiente real.
+- ~~Login de verdade ainda não testado ponta a ponta~~ **Resolvido**: o dono do produto confirmou
+  em 11/09/2026 que login e cadastro funcionam no preview real do Lovable. No caminho, também foi
+  necessário habilitar "Email signups" no Auth do Supabase (estava desativado por padrão) — feito
+  pelo agente do Lovable. Confirmação por e-mail continua exigida por padrão antes do primeiro
+  login (comportamento padrão do Supabase Auth, não alterado).
 - **`supabase/migrations/` agora tem duas "gerações"**: `20260911171930`/`20260911172057` foram
   aplicadas a um projeto Supabase (`rplriacrdebmepnmjpqt`) que o Lovable Cloud não usa mais como
   backend conectado — ficam como registro histórico, não como schema vigente.

@@ -13,8 +13,10 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedBrainRouteImport } from './routes/_authenticated/brain'
-import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedLibraryIndexRouteImport } from './routes/_authenticated/library/index'
+import { Route as AuthenticatedLibraryIdRouteImport } from './routes/_authenticated/library/$id'
+import { Route as AuthenticatedLibraryNewRouteImport } from './routes/_authenticated/library/new'
 import { Route as AuthenticatedReflectionsIndexRouteImport } from './routes/_authenticated/reflections/index'
 import { Route as AuthenticatedReflectionsNewRouteImport } from './routes/_authenticated/reflections/new'
 
@@ -37,14 +39,25 @@ const AuthenticatedBrainRoute = AuthenticatedBrainRouteImport.update({
   path: '/brain',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
-  id: '/library',
-  path: '/library',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLibraryIndexRoute =
+  AuthenticatedLibraryIndexRouteImport.update({
+    id: '/library/',
+    path: '/library/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLibraryIdRoute = AuthenticatedLibraryIdRouteImport.update({
+  id: '/library/$id',
+  path: '/library/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLibraryNewRoute = AuthenticatedLibraryNewRouteImport.update({
+  id: '/library/new',
+  path: '/library/new',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedReflectionsIndexRoute =
@@ -64,18 +77,22 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/brain': typeof AuthenticatedBrainRoute
-  '/library': typeof AuthenticatedLibraryRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/library/$id': typeof AuthenticatedLibraryIdRoute
+  '/library/new': typeof AuthenticatedLibraryNewRoute
   '/reflections/new': typeof AuthenticatedReflectionsNewRoute
+  '/library/': typeof AuthenticatedLibraryIndexRoute
   '/reflections/': typeof AuthenticatedReflectionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/brain': typeof AuthenticatedBrainRoute
-  '/library': typeof AuthenticatedLibraryRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/library/$id': typeof AuthenticatedLibraryIdRoute
+  '/library/new': typeof AuthenticatedLibraryNewRoute
   '/reflections/new': typeof AuthenticatedReflectionsNewRoute
+  '/library': typeof AuthenticatedLibraryIndexRoute
   '/reflections': typeof AuthenticatedReflectionsIndexRoute
 }
 export interface FileRoutesById {
@@ -83,10 +100,12 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/brain': typeof AuthenticatedBrainRoute
-  '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/library/$id': typeof AuthenticatedLibraryIdRoute
+  '/_authenticated/library/new': typeof AuthenticatedLibraryNewRoute
   '/_authenticated/reflections/new': typeof AuthenticatedReflectionsNewRoute
+  '/_authenticated/library/': typeof AuthenticatedLibraryIndexRoute
   '/_authenticated/reflections/': typeof AuthenticatedReflectionsIndexRoute
 }
 export interface FileRouteTypes {
@@ -95,28 +114,34 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/brain'
-    | '/library'
     | '/settings'
+    | '/library/$id'
+    | '/library/new'
     | '/reflections/new'
+    | '/library/'
     | '/reflections/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/brain'
-    | '/library'
     | '/settings'
     | '/'
+    | '/library/$id'
+    | '/library/new'
     | '/reflections/new'
+    | '/library'
     | '/reflections'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
     | '/_authenticated/brain'
-    | '/_authenticated/library'
     | '/_authenticated/settings'
     | '/_authenticated/'
+    | '/_authenticated/library/$id'
+    | '/_authenticated/library/new'
     | '/_authenticated/reflections/new'
+    | '/_authenticated/library/'
     | '/_authenticated/reflections/'
   fileRoutesById: FileRoutesById
 }
@@ -155,18 +180,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBrainRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/library': {
-      id: '/_authenticated/library'
-      path: '/library'
-      fullPath: '/library'
-      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/library/': {
+      id: '/_authenticated/library/'
+      path: '/library'
+      fullPath: '/library/'
+      preLoaderRoute: typeof AuthenticatedLibraryIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/library/$id': {
+      id: '/_authenticated/library/$id'
+      path: '/library/$id'
+      fullPath: '/library/$id'
+      preLoaderRoute: typeof AuthenticatedLibraryIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/library/new': {
+      id: '/_authenticated/library/new'
+      path: '/library/new'
+      fullPath: '/library/new'
+      preLoaderRoute: typeof AuthenticatedLibraryNewRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/reflections/': {
@@ -188,19 +227,23 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedBrainRoute: typeof AuthenticatedBrainRoute
-  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedLibraryIdRoute: typeof AuthenticatedLibraryIdRoute
+  AuthenticatedLibraryNewRoute: typeof AuthenticatedLibraryNewRoute
   AuthenticatedReflectionsNewRoute: typeof AuthenticatedReflectionsNewRoute
+  AuthenticatedLibraryIndexRoute: typeof AuthenticatedLibraryIndexRoute
   AuthenticatedReflectionsIndexRoute: typeof AuthenticatedReflectionsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBrainRoute: AuthenticatedBrainRoute,
-  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedLibraryIdRoute: AuthenticatedLibraryIdRoute,
+  AuthenticatedLibraryNewRoute: AuthenticatedLibraryNewRoute,
   AuthenticatedReflectionsNewRoute: AuthenticatedReflectionsNewRoute,
+  AuthenticatedLibraryIndexRoute: AuthenticatedLibraryIndexRoute,
   AuthenticatedReflectionsIndexRoute: AuthenticatedReflectionsIndexRoute,
 }
 

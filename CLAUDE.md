@@ -51,6 +51,18 @@ estável, sem chave de serviço exposta). O fluxo que funciona:
 4. Depois de qualquer mudança de schema, rodar `bun run typecheck`/`lint`/`build` — o Lovable
    regenera `src/integrations/supabase/types.ts` automaticamente e isso pode introduzir problemas
    de formatação (rodar `bun run format`).
+5. `insert into storage.buckets (...)` é **rejeitado** pela migration gerenciada do Lovable — para
+   criar um bucket novo, pedir ao Lovable para criar por fora (ele tem uma ferramenta própria para
+   isso) e comentar o `insert` na migration commitada, com uma nota explicando (ver
+   `supabase/migrations/README.md` para o exemplo de `library-originals`).
+6. O Lovable às vezes hesita em rodar um SQL que eu componho na hora se ele não é **byte-idêntico**
+   a um arquivo já commitado (prefere ler o arquivo do repo com `code--exec`/`cat` a confiar no SQL
+   colado na mensagem) — então sempre commitar a migration em `supabase/migrations/` **antes** de
+   pedir para ele aplicar, e referenciar o caminho do arquivo na mensagem.
+
+Depois de aplicar, sincronizar de volta: `git fetch origin main && git merge origin/main` no branch
+de trabalho local (o Lovable comita direto no `main`), resolver conflitos em `types.ts` preferindo
+a versão dele (`git checkout --theirs`) já que é a mais atual, então `bun run format`.
 
 Se algum dia o projeto migrar para a integração "Supabase" separada (conectar um projeto Supabase
 externo, ao invés do Lovable Cloud), aí sim existe um `project_id` estável e dá para usar
