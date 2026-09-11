@@ -1,4 +1,9 @@
-project_id = "rplriacrdebmepnmjpqt"
+# O Lovable Cloud gerencia o backend real deste projeto e não expõe uma
+# referência de projeto estável externamente (ele já reatribuiu o backend
+# gerenciado uma vez, ver docs/DECISIONS.md, 11/09/2026). Este project_id é
+# só um placeholder para uso local com `supabase start` — não representa o
+# projeto de produção atual.
+project_id = "memoria-reflexiva-local"
 
 [api]
 enabled = true

@@ -39,7 +39,9 @@ versionada no GitHub** (criar tabela, alterar coluna, RLS, policy, trigger, fun�
 - **Frontend**: TanStack Start (`@tanstack/react-start` + `@tanstack/react-router`), React 19, Vite 8, Tailwind CSS 4, shadcn/ui (Radix), TanStack Query. Roteamento por arquivo em `src/routes/` — ver `src/routes/README.md`.
 - **Gerenciador de pacotes**: bun (`bun.lock`, `bunfig.toml`). `npm`/`node` também disponíveis.
 - **Scaffold**: criado e sincronizado pelo Lovable (`.lovable/project.json`). Preservado como está — não migramos framework.
-- **Backend**: Supabase — projeto dedicado deste app, id `rplriacrdebmepnmjpqt` (ver `docs/PROJECT_STATE.md` para status atual).
+- **Backend**: Supabase via **Lovable Cloud** (integração gerenciada, não um projeto Supabase com
+  referência externa estável — ver `docs/DECISIONS.md` de 11/09/2026 e `docs/PROJECT_STATE.md`
+  para o fluxo de migrations adaptado a essa particularidade).
 - **Cliente Supabase**: `src/integrations/supabase/client.ts` (tipado por `src/integrations/supabase/types.ts`, gerado a partir do schema remoto — não editar à mão).
 
 ## Estrutura do repositório (adaptada ao scaffold real)
