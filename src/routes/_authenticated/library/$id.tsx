@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Brain, Trash2 } from "lucide-react";
+import { ArrowLeft, Brain, Layers, Loader2, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteLibraryItem, useLibraryItem } from "@/hooks/use-library";
+import { TERMINAL_PROCESSING_STATUSES, type ProcessingStatus } from "@/lib/document-processing";
 
 export const Route = createFileRoute("/_authenticated/library/$id")({
   head: () => ({ meta: [{ title: "Memória Reflexiva | Documento" }] }),
@@ -38,6 +39,28 @@ const AUTHORSHIP_LABELS: Record<string, string> = {
   external: "Referência externa",
   mixed: "Misto",
   unknown: "Autoria desconhecida",
+};
+
+const STATUS_LABELS: Record<ProcessingStatus, string> = {
+  uploaded: "Recebido",
+  queued: "Na fila de processamento",
+  extracting: "Extraindo texto",
+  structuring: "Identificando estrutura",
+  chunking: "Dividindo em trechos",
+  embedding: "Gerando embeddings",
+  extracting_memory: "Extraindo memórias",
+  updating_profile: "Atualizando perfil autoral",
+  completed: "Processado",
+  failed: "Erro no processamento",
+};
+
+const SECTION_TYPE_LABELS: Record<string, string> = {
+  book: "Livro",
+  part: "Parte",
+  chapter: "Capítulo",
+  section: "Seção",
+  subtitle: "Subtítulo",
+  page: "Página",
 };
 
 function DocumentDetailPage() {
@@ -72,8 +95,10 @@ function DocumentDetailPage() {
     );
   }
 
-  const { item, files } = data;
+  const { item, files, sections, chunkCount, job } = data;
   const latestFile = files[0];
+  const status = item.processing_status as ProcessingStatus;
+  const isProcessing = !TERMINAL_PROCESSING_STATUSES.has(status);
 
   return (
     <div className="fade-up max-w-3xl">
@@ -91,6 +116,12 @@ function DocumentDetailPage() {
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <Badge variant="outline">{ITEM_TYPE_LABELS[item.item_type]}</Badge>
             <Badge variant="outline">{AUTHORSHIP_LABELS[item.authorship_type]}</Badge>
+            <Badge
+              variant={status === "failed" ? "destructive" : isProcessing ? "secondary" : "outline"}
+            >
+              {isProcessing && <Loader2 className="mr-1 size-3 animate-spin" aria-hidden="true" />}
+              {STATUS_LABELS[status] ?? status}
+            </Badge>
             {item.category && <Badge variant="outline">{item.category}</Badge>}
             {item.tags.map((tag) => (
               <Badge key={tag} variant="secondary">
@@ -147,6 +178,45 @@ function DocumentDetailPage() {
           </p>
         )}
       </section>
+
+      {status === "failed" && job?.error_message && (
+        <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive">
+          <p className="font-medium">O processamento deste item falhou.</p>
+          <p className="mt-1 text-destructive/80">{job.error_message}</p>
+        </div>
+      )}
+
+      {status === "completed" && sections.length > 0 && (
+        <section className="mt-6 rounded-2xl border border-border bg-card p-6 sm:p-8">
+          <h2 className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-primary">
+            <Layers className="size-3.5" aria-hidden="true" />
+            Estrutura e indexação
+          </h2>
+          {sections.length > 1 || sections.some((section) => section.title) ? (
+            <ul className="mt-4 space-y-1.5">
+              {sections.map((section) => (
+                <li key={section.id} className="flex items-baseline gap-2 text-sm">
+                  <Badge variant="outline" className="shrink-0 text-[10px]">
+                    {SECTION_TYPE_LABELS[section.section_type] ?? section.section_type}
+                  </Badge>
+                  <span className="truncate text-card-foreground">
+                    {section.title ?? "(sem título)"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground">
+              Nenhuma divisão em capítulos ou seções foi identificada — o texto foi tratado como um
+              único bloco.
+            </p>
+          )}
+          <p className="mt-4 text-xs text-muted-foreground">
+            {chunkCount} {chunkCount === 1 ? "trecho preparado" : "trechos preparados"} para busca
+            (a busca em si chega na Fase 4 — ver docs/ROADMAP.md).
+          </p>
+        </section>
+      )}
 
       <div className="mt-6 flex items-start gap-3 rounded-2xl border border-dashed border-border bg-card/50 p-6 text-sm text-muted-foreground">
         <Brain className="mt-0.5 size-4 shrink-0" aria-hidden="true" />

@@ -32,7 +32,14 @@ const AUTHORSHIP_LABELS: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   uploaded: "Recebido",
-  processed: "Processado",
+  queued: "Na fila",
+  extracting: "Extraindo texto",
+  structuring: "Identificando estrutura",
+  chunking: "Dividindo em trechos",
+  embedding: "Gerando embeddings",
+  extracting_memory: "Extraindo memórias",
+  updating_profile: "Atualizando perfil autoral",
+  completed: "Processado",
   failed: "Erro",
 };
 
