@@ -4,6 +4,68 @@ Registro de decisões importantes. Formato: DECISION / CONTEXT / OPTIONS / CHOIC
 
 ---
 
+## 2026-09-11 — Rotas autenticadas renderizadas só no cliente (`ssr: false`)
+
+**DECISION**: O layout `/_authenticated` (e tudo abaixo dele — Início, Biblioteca, Meu Cérebro,
+Reflexões, Configurações) e `/login` usam a opção `ssr: false` do TanStack Router, em vez de SSR
+completo.
+
+**CONTEXT**: A sessão do Supabase é guardada pelo `@supabase/supabase-js` no `localStorage` do
+navegador. No servidor (durante o SSR) não existe `localStorage`, então uma checagem de sessão no
+servidor sempre veria "ninguém logado" — o que redirecionaria incorretamente para `/login` mesmo
+usuários autenticados a cada navegação para uma página protegida. A forma correta de resolver isso
+com SSR completo seria trocar para sessão baseada em cookie (pacote `@supabase/ssr`), o que é uma
+mudança de arquitetura maior.
+
+**OPTIONS**: (1) `ssr:false` nas rotas autenticadas e no login; (2) migrar para sessão via cookie
+com `@supabase/ssr` agora; (3) aceitar o bug de redirecionamento incorreto.
+
+**CHOICE**: Opção 1.
+
+**WHY**: É uma opção nativa e documentada do TanStack Router (`ssr: false | 'data-only'`, cascata
+automática para rotas filhas — verificado em `@tanstack/router-core`), não exige nova dependência,
+e é apropriada para um app pessoal/privado sem necessidade de SEO nas páginas atrás do login. Opção
+3 violaria "nunca confiar apenas na interface" de forma inversa (mostraria a tela errada a usuários
+legítimos). Opção 2 é mais correta a longo prazo, mas overengineering para a Fase 1.
+
+**CONSEQUENCES**: No primeiro carregamento de uma rota protegida (ou do login), o React acusa no
+console um aviso de "hydration mismatch" — esperado e documentado no próprio código do
+`@tanstack/react-router` (`Match.js`, `resolvedNoSsr` envolve a rota em `Suspense`); a árvore é
+"regenerada no cliente" automaticamente, sem efeito visual ou funcional (verificado com captura de
+tela e teste no navegador). Se o produto precisar de SSR real nessas páginas no futuro (ex.: PWA
+com abertura offline, deep links compartilháveis), reavaliar com `@supabase/ssr`.
+
+---
+
+## 2026-09-11 — Autocadastro exposto no login (a revisar com o dono do produto)
+
+**DECISION**: A tela de login inclui um link "Não tem conta? Criar conta" que chama
+`supabase.auth.signUp` diretamente — sem convite, aprovação ou restrição de domínio.
+
+**CONTEXT**: MR-01 §2 lista "Acesso para criação de conta, se o produto permitir auto cadastro"
+como opcional ("se"). O Memória Reflexiva é um aplicativo pessoal de um único dono, e a Fase 1
+precisava de alguma forma de criar a primeira conta — não havia ainda uma rota de convite/admin,
+e as chaves com privilégio de administrador (`service_role`) não devem circular fora do backend.
+
+**OPTIONS**: (1) Expor autocadastro público na tela de login (mais simples, permite qualquer
+pessoa com o link criar conta); (2) omitir o link e provisionar a conta do dono do produto por
+outro meio (ex.: SQL/admin API), deixando login **sem** autocadastro público; (3) autocadastro
+com aprovação manual/lista de convidados.
+
+**CHOICE**: Opção 1, por ora — sinalizada aqui para revisão explícita do dono do produto.
+
+**WHY**: Desbloqueia o Phase 1 sem depender de uma etapa manual fora do app. RLS já isola os dados
+de cada conta entre si, então autocadastro não expõe dados de ninguém — mas para um "diário
+pessoal" pode não ser o comportamento desejado a longo prazo (qualquer pessoa com a URL pode criar
+uma conta).
+
+**CONSEQUENCES**: Se o dono do produto preferir um app fechado (sem autocadastro público), a
+correção é simples: remover o link/modo `sign_up` de `src/routes/login.tsx` e desabilitar
+"Enable email signups" nas configurações de Auth do Supabase. Registrado aqui para não ficar uma
+decisão silenciosa.
+
+---
+
 ## 2026-09-11 — Reset do backend Supabase herdado
 
 **DECISION**: Apagar todo o schema (tabelas, policies, funções, trigger) de um projeto Supabase

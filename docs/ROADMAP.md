@@ -7,7 +7,8 @@
 
 - [x] **Fase 0 — Fundação**: projeto Lovable, GitHub, Supabase, Claude Code, documentação, CI,
       fundação de autenticação (`profiles` + RLS + trigger de signup).
-- [ ] **Fase 1 — Auth + App Shell**: login, sessão, proteção de rotas, navegação, Home vazia.
+- [x] **Fase 1 — Auth + App Shell**: login (e-mail/senha + criar conta + recuperar senha),
+      sessão, proteção de rotas, navegação (sidebar/bottom bar), Home vazia (MR-02).
 - [ ] **Fase 2 — Biblioteca**: tabela `library_items`/`library_files`, Storage, upload, organização,
       busca simples, detalhe do documento.
 - [ ] **Fase 3 — Ingestão**: extração, `document_sections`, `document_chunks`, `processing_jobs`,
@@ -41,6 +42,7 @@ antes de especificar esses módulos em detalhe (ver `docs/specs/README.md`).
 
 ## Próximo passo concreto
 
-Iniciar a **Fase 1**: tela de login funcional usando Supabase Auth (e-mail/senha, conforme
-MR-01), proteção de rotas no TanStack Router, e uma Home mínima (MR-02) que já preserve o
-"vazio orientativo" para conta nova.
+Iniciar a **Fase 2 — Biblioteca**: modelar e migrar `library_items`/`library_files`, criar os
+buckets de Storage, e construir upload + listagem + busca simples + Detalhe do Documento (MR-05).
+Antes de especificar em detalhe, pedir ao dono do produto o documento MR-03 (Biblioteca), ainda
+não recebido.
