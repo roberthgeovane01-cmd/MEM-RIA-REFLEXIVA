@@ -3,10 +3,9 @@
 > Atualizar ao final de cada etapa significativa. Esta é a fonte de verdade sobre "onde paramos",
 > não a memória da conversa.
 
-**Fase atual**: Fase 2 — Biblioteca (MVP construído + upload de PDF/DOCX ampliado, aguardando
-confirmação visual do dono do produto no preview do Lovable). Fase 0 e Fase 1 concluídas e
-**confirmadas funcionando de ponta a ponta pelo dono do produto** — login e cadastro reais
-testados no preview do Lovable em 11/09/2026.
+**Fase atual**: Fase 2 — Biblioteca **concluída e confirmada pelo dono do produto** no preview do
+Lovable em 11/09/2026, incluindo o upload de PDF/DOCX. Fase 0, Fase 1 e Fase 2 confirmadas
+funcionando de ponta a ponta. Próximo passo: Fase 3 — Ingestão.
 
 ## Concluído
 
@@ -103,8 +102,8 @@ testados no preview do Lovable em 11/09/2026.
   combinados, ordenação, paginação, seleção múltipla, coleções) — MVP MR-03/MR-04 primeiro,
   ampliar depois, conforme `docs/ROADMAP.md`.
 - Build/typecheck/lint passam. Verificado neste sandbox que rotas protegidas continuam redirecionando
-  corretamente para `/login`. **Ainda não verificado visualmente com dados reais** (mesma limitação
-  de rede do sandbox — ver "Problemas conhecidos").
+  corretamente para `/login`. **Confirmado com dados reais pelo dono do produto** no preview do
+  Lovable em 11/09/2026 (criar item, listar, ver detalhe).
 
 **Fase 2 — ampliação de formatos de upload (PDF/DOCX)**
 
@@ -123,21 +122,19 @@ testados no preview do Lovable em 11/09/2026.
   `bun run build` (não engordam o bundle principal para quem só usa texto colado/.txt/.md).
   `bun run typecheck`/`lint`/`build` passam; checagem no navegador (Playwright, servidor local)
   sem erros de página e com o redirecionamento de rota protegida ainda correto.
-- **Ainda não testado com dados reais** — mesma limitação de rede do sandbox; pendente o dono do
-  produto tentar de novo o upload de PDF/DOCX no preview do Lovable.
+- **Confirmado pelo dono do produto** no preview do Lovable em 11/09/2026 — upload de PDF/DOCX
+  testado e aprovado.
 
 ## Em andamento
 
-- Aguardando o dono do produto testar `/library` no preview do Lovable com uma conta real (criar um
-  item, ver a lista, abrir o detalhe, excluir) antes de declarar a Fase 2 (MVP) concluída.
+- Nenhum item aberto na Fase 2. Próximo passo é iniciar a Fase 3.
 
 ## Próximo
 
-1. Confirmar Fase 2 (MVP) com o dono do produto.
-2. **Fase 3 — Ingestão**: pipeline de processamento real (`document_sections`, `document_chunks`,
-   `processing_jobs`), formatos além de .txt/.md (Markdown já funciona; DOCX/PDF vêm depois),
-   estados explícitos de status.
-3. Depois: **Fase 4 — RAG** (embeddings, full-text search, busca híbrida) para fechar o primeiro
+1. **Fase 3 — Ingestão**: pipeline de processamento real (`document_sections`, `document_chunks`,
+   `processing_jobs`), estados explícitos de status (a extração hoje é síncrona no navegador, sem
+   fila).
+2. Depois: **Fase 4 — RAG** (embeddings, full-text search, busca híbrida) para fechar o primeiro
    vertical slice completo — login → upload TXT → armazenar → processar → chunks → buscar → mostrar
    resultado com fonte.
 
