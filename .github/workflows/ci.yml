@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: install · typecheck · lint · build
+    runs-on: ubuntu-latest
+    env:
+      # The publishable key is safe to expose (it is not a secret — see
+      # docs/SECURITY.md). A placeholder value is enough for the build step,
+      # which never establishes a real connection.
+      VITE_SUPABASE_URL: "https://placeholder.supabase.co"
+      VITE_SUPABASE_PUBLISHABLE_KEY: "placeholder"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build
+        run: bun run build

@@ -20,6 +20,15 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Environment secrets — never commit real values, see .env.example
+.env
+.env.local
+.env.*.local
+
+# Supabase CLI local runtime state
+supabase/.temp/
+supabase/.branches/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
