@@ -14,10 +14,11 @@
 
 -- library_items.processing_status only ever reached 'uploaded' | 'processed'
 -- | 'failed' before this migration (Fase 2 comment on the original
--- constraint). Rename 'processed' -> 'completed' to match the full pipeline
--- vocabulary below, then widen the constraint.
-update public.library_items set processing_status = 'completed' where processing_status = 'processed';
-
+-- constraint). Widen the constraint FIRST — the old one only allows
+-- 'uploaded'/'processed'/'failed' and CHECK constraints are validated
+-- immediately, so updating existing rows to 'completed' before this would
+-- violate it — then rename 'processed' -> 'completed' to match the full
+-- pipeline vocabulary below.
 alter table public.library_items drop constraint library_items_processing_status_check;
 
 alter table public.library_items add constraint library_items_processing_status_check check (
@@ -26,6 +27,8 @@ alter table public.library_items add constraint library_items_processing_status_
     'embedding', 'extracting_memory', 'updating_profile', 'completed', 'failed'
   )
 );
+
+update public.library_items set processing_status = 'completed' where processing_status = 'processed';
 
 -- Preserves book -> part -> chapter -> section -> subtitle -> page structure
 -- detected in a document. One item with no detectable heading structure
