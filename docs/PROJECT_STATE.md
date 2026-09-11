@@ -8,6 +8,7 @@
 ## Concluído
 
 **Fase 0 — Fundação**
+
 - Investigação completa do repositório real (TanStack Start + React 19 + Vite 8 + Tailwind 4 +
   shadcn/ui, scaffold do Lovable, gerenciado com bun).
 - Backend Supabase provisionado via integração nativa do Lovable (`enable_database`), projeto
@@ -27,6 +28,7 @@
   `docs/specs/` (MR-00, MR-01, MR-02, MR-04, MR-05, MR-06, MR-08, MR-09 + Arquitetura Técnica Mestra).
 
 **Fase 1 — Auth + App Shell**
+
 - Variáveis de ambiente reais do projeto Supabase confirmadas contra a convenção documentada do
   Lovable Cloud (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`)
   e gravadas em `.env.local` (não commitado).
@@ -58,7 +60,7 @@
 
 ## Próximo
 
-1. **Fase 2 — Biblioteca** (ver `docs/ROADMAP.md`): pedir/confirmar MR-03, modelar e migrar
+1. **Fase 2 — Biblioteca** (MR-03 recebido, ver `docs/ROADMAP.md`): modelar e migrar
    `library_items`/`library_files`, criar buckets de Storage, construir upload + listagem + busca
    simples + Detalhe do Documento (MR-05).
 2. Depois: pipeline de ingestão (Fase 3) e o primeiro vertical slice completo — login → upload TXT
@@ -76,8 +78,8 @@
 - **Decisão a revisar com o dono do produto**: a tela de login expõe autocadastro público ("Criar
   conta") sem convite — ver `docs/DECISIONS.md` (2026-09-11) para o raciocínio e como reverter se
   não for o comportamento desejado para um app pessoal.
-- MR-03 (Biblioteca) e MR-07 (Criar Reflexão) ainda não foram recebidos como documento funcional
-  dedicado — pedir ao dono do produto antes de especificar esses módulos em detalhe.
+- MR-07 (Criar Reflexão) ainda não foi recebido como documento funcional dedicado — pedir ao dono
+  do produto antes de especificar esse módulo em detalhe.
 - Aviso do Supabase Advisor **"Leaked Password Protection Disabled"** (nível WARN, categoria Auth)
   ainda não resolvido — é uma configuração do painel Supabase (Auth → Providers → Password), não
   uma migration SQL.
@@ -85,7 +87,7 @@
   MCP do Supabase e espelhadas manualmente como arquivos locais. Ao trabalhar num ambiente com a
   CLI disponível, rodar `supabase link` e conferir `supabase migration list`.
 - O dev server local só sobe em IPv4 explícito neste sandbox (`vite dev --host 127.0.0.1 --port
-  8080`) porque o binding IPv6 padrão do scaffold Lovable (`host: "::"`) não é suportado aqui —
+8080`) porque o binding IPv6 padrão do scaffold Lovable (`host: "::"`) não é suportado aqui —
   não é um problema do código, apenas uma particularidade deste ambiente de execução.
 - Mockups visuais (`ChatGPT Image *.png`) recebidos junto com a documentação funcional não foram
   versionados no repositório — ver `docs/specs/README.md`.

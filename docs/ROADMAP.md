@@ -37,12 +37,11 @@ REFLEXÃO EXTERNA → COMENTÁRIO → BUSCA NA MEMÓRIA → GERAÇÃO → EDIÇ�
 
 ## Documentos de produto ainda pendentes
 
-MR-03 (Biblioteca) e MR-07 (Criar Reflexão) ainda não foram recebidos do dono do produto — pedir
-antes de especificar esses módulos em detalhe (ver `docs/specs/README.md`).
+MR-07 (Criar Reflexão) ainda não foi recebido do dono do produto — pedir antes de especificar esse
+módulo em detalhe (ver `docs/specs/README.md`).
 
 ## Próximo passo concreto
 
-Iniciar a **Fase 2 — Biblioteca**: modelar e migrar `library_items`/`library_files`, criar os
-buckets de Storage, e construir upload + listagem + busca simples + Detalhe do Documento (MR-05).
-Antes de especificar em detalhe, pedir ao dono do produto o documento MR-03 (Biblioteca), ainda
-não recebido.
+Iniciar a **Fase 2 — Biblioteca** (MR-03 recebido): modelar e migrar
+`library_items`/`library_files`, criar os buckets de Storage, e construir upload + listagem +
+busca simples + Detalhe do Documento (MR-05).
