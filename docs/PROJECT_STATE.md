@@ -3,10 +3,9 @@
 > Atualizar ao final de cada etapa significativa. Esta é a fonte de verdade sobre "onde paramos",
 > não a memória da conversa.
 
-**Fase atual**: Fase 3 — Ingestão (construída: `document_sections`/`document_chunks`/
-`processing_jobs`, pipeline de estruturação + chunking rodando no cliente — ver
-`docs/DECISIONS.md`). Aguardando confirmação visual do dono do produto no preview do Lovable. Fase
-0, Fase 1 e Fase 2 confirmadas funcionando de ponta a ponta pelo dono do produto.
+**Fase atual**: Fase 3 — Ingestão **concluída e confirmada com dado real** pelo dono do produto no
+preview do Lovable em 11/09/2026 (item processado, 1 seção, 60 chunks, status `completed`). Fase 0,
+Fase 1, Fase 2 e Fase 3 confirmadas funcionando de ponta a ponta. Próximo passo: Fase 4 — RAG.
 
 ## Concluído
 
@@ -161,17 +160,17 @@
   a constraint aceita os 10 estados, nenhum `GRANT` extra foi necessário, nenhum bucket criado,
   advisor/linter sem avisos novos.
 - `types.ts` sincronizado de volta e formatado; `bun run typecheck`/`lint`/`build` passam limpos.
+- **Confirmado com dado real** pelo dono do produto no preview do Lovable — item criado, verificado
+  diretamente no banco (`mcp__Lovable__query_database`): `processing_status = completed`,
+  `job_status = completed`, `progress = 100`, 1 seção, 60 chunks, sem erro.
 
 ## Em andamento
 
-- Aguardando o dono do produto testar `/library/new` (criar um item) e `/library/$id` (ver o status
-  avançar, abrir o detalhe e conferir a "Estrutura e indexação") no preview do Lovable, antes de
-  declarar a Fase 3 concluída.
+- Nenhum item aberto na Fase 3. Próximo passo é iniciar a Fase 4.
 
 ## Próximo
 
-1. Confirmar a Fase 3 com o dono do produto.
-2. **Fase 4 — RAG**: `chunk_embeddings` (ou embutido em `document_chunks`), full-text search sobre
+1. **Fase 4 — RAG**: `chunk_embeddings` (ou embutido em `document_chunks`), full-text search sobre
    `document_chunks.search_vector` (já existe), busca híbrida, `EmbeddingProvider` — primeiro passo
    que precisa de segredo de IA, logo primeiro passo que precisa mesmo de backend real (Edge
    Function), fechando o primeiro vertical slice completo — login → upload → armazenar → processar
