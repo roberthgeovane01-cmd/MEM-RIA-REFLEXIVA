@@ -11,9 +11,9 @@
       sessão, proteção de rotas, navegação (sidebar/bottom bar), Home vazia (MR-02).
 - [x] **Fase 2 — Biblioteca (MVP)**: `library_items`/`library_files`, Storage (`library-originals`),
       upload (.txt/.md/.pdf/.docx, até 20MB) ou texto colado, listagem com busca, Detalhe do
-      Documento (MR-05, versão MVP). Aguardando confirmação do dono do produto no preview — ver
-      `docs/PROJECT_STATE.md`. Fora do MVP por escolha: PDF escaneado/OCR, filtros avançados
-      combinados, coleções.
+      Documento (MR-05, versão MVP). **Confirmada pelo dono do produto** no preview do Lovable em
+      11/09/2026 — ver `docs/PROJECT_STATE.md`. Fora do MVP por escolha: PDF escaneado/OCR, filtros
+      avançados combinados, coleções.
 - [ ] **Fase 3 — Ingestão**: extração, `document_sections`, `document_chunks`, `processing_jobs`,
       estados explícitos de status.
 - [ ] **Fase 4 — RAG**: `chunk_embeddings`, full-text search, busca híbrida, evidências.
@@ -46,8 +46,6 @@ módulo em detalhe (ver `docs/specs/README.md`).
 
 ## Próximo passo concreto
 
-1. Confirmar a Fase 2 (MVP, agora com upload de PDF/DOCX) com o dono do produto testando no preview
-   do Lovable.
-2. Iniciar a **Fase 3 — Ingestão**: pipeline de processamento assíncrono (extração estruturada,
+1. Iniciar a **Fase 3 — Ingestão**: pipeline de processamento assíncrono (extração estruturada,
    `document_sections`, `document_chunks`, `processing_jobs` com estados explícitos) — a extração
    de texto hoje é síncrona no navegador, sem fila.
