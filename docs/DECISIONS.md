@@ -4,6 +4,108 @@ Registro de decisões importantes. Formato: DECISION / CONTEXT / OPTIONS / CHOIC
 
 ---
 
+## 2026-09-11 — Lovable Cloud não tem referência de projeto Supabase estável; fluxo de migrations adaptado
+
+**DECISION**: Parar de tratar o backend do Lovable Cloud como um projeto Supabase com `project_id`
+fixo e endereçável via `mcp__Supabase__*`. Daqui para frente, migrations continuam sendo autoradas
+em `supabase/migrations/` (fonte de verdade no GitHub), mas são **aplicadas pedindo ao próprio
+agente do Lovable** para executá-las no backend que ele tem conectado no momento.
+
+**CONTEXT**: Depois do merge do PR #1, o preview do Lovable quebrou inteiro ("This page didn't
+load") em toda rota. Investigando, a causa imediata era `src/integrations/supabase/client.ts`
+lançando exceção quando `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` estavam ausentes — e
+esse arquivo é importado pelo layout raiz, então o erro derrubava a aplicação inteira (corrigido
+separadamente, ver a decisão de resiliência abaixo/PR #2).
+
+Investigando por que as variáveis estavam ausentes, pedi ao agente do Lovable
+(`mcp__Lovable__send_message`) para verificar. Ele usou uma ferramenta interna chamada
+`supabase--rebind_secrets` e, ao perguntar diretamente, confirmou: **o backend gerenciado do
+Lovable Cloud não é mais o projeto `rplriacrdebmepnmjpqt`** que eu havia configurado manualmente
+na Fase 0 via `mcp__Supabase__*` (usando o ref que o próprio dono do produto colou no chat,
+copiado da URL do projeto naquele momento). O agente do Lovable explicitamente recusou revelar
+qual é o novo projeto ("Its identifier and URL can't be exposed here") e também recusou vincular a
+um ref específico que eu pedi ("I can't rebind this Lovable Cloud project to a specific external
+project reference — the available rebind only refreshes its existing managed backend").
+
+Verifiquei que o projeto `rplriacrdebmepnmjpqt` continua intacto (tabela `profiles` ainda lá,
+inalterada) — ele não foi apagado, simplesmente deixou de ser o backend que o app usa. E o projeto
+que o Lovable Cloud agora usa também não tinha a extensão `moddatetime` nem a tabela `profiles`
+(confirmado ao tentar aplicar a migration original e o Lovable reportar
+`function extensions.moddatetime() does not exist`).
+
+**OPTIONS**:
+
+1. Continuar gerenciando o schema diretamente via `mcp__Supabase__*` contra um `project_id` fixo,
+   assumindo que ele permanece estável.
+2. Aceitar que o Lovable Cloud é uma caixa-preta sem ref estável, e sempre que precisar de uma
+   mudança de schema, pedir ao próprio agente do Lovable para aplicá-la (ele tem acesso interno que
+   nós não temos, mesmo sem revelar qual projeto é).
+3. Trocar de integração: desconectar o Lovable Cloud e usar a integração separada "Supabase"
+   (conectar um projeto Supabase explícito, com ref estável e conhecido).
+
+**CHOICE**: Opção 2 para agora — documentar e seguir em frente; Opção 3 registrada como decisão
+pendente para o dono do produto avaliar (ver `docs/PROJECT_STATE.md`).
+
+**WHY**: A opção 1 já se mostrou factualmente errada — o `project_id` não é estável. A opção 3
+seria a mais alinhada ao princípio "GitHub/migrations como fonte de verdade" do documento
+arquitetural mestre, mas é uma mudança de infraestrutura maior (desconectar Lovable Cloud, conectar
+Supabase externo, possivelmente perder o que já está no backend atual) que não deveria ser feita
+sem o dono do produto decidir conscientemente. A opção 2 desbloqueia o app agora, sem mudança de
+infraestrutura, e ainda preserva GitHub como fonte de verdade do **conteúdo** das migrations — só
+muda quem efetivamente as executa.
+
+**CONSEQUENCES**:
+
+- `supabase/config.toml` não tem mais um `project_id` real — é só um placeholder para
+  `supabase start` local.
+- `supabase/migrations/` agora contém duas gerações de arquivos: os meus
+  (`20260911171930`/`20260911172057`, aplicados ao projeto antigo, mantidos como histórico) e os
+  do Lovable (`20260911181444`/`20260911181504`/`20260911181518`, nomes UUID, aplicados ao backend
+  realmente conectado — incluem `GRANT`s extras que o Postgres gerenciado do Lovable exige e que um
+  projeto Supabase criado manualmente não precisaria).
+- O Lovable também gerou e commitou direto no GitHub `src/integrations/supabase/client.server.ts`
+  (cliente admin com `service_role`, atrás de um Proxy para carregamento preguiçoso) e
+  `auth-middleware.ts` (middleware de validação de Bearer token para server functions do TanStack
+  Start) — scaffolding padrão dele, ainda não usada pelo app, mas mantida (marcada
+  "automatically generated. Do not edit it directly").
+- O aviso do Supabase Advisor sobre "Leaked Password Protection" registrado na Fase 0 foi contra o
+  projeto antigo — precisa ser reconferido quando houver visibilidade do projeto atual.
+- Documentado em `CLAUDE.md` § "Como aplicar migrations" como o novo procedimento operacional
+  padrão para mudanças de schema neste projeto.
+
+---
+
+## 2026-09-11 — Resiliência: app não pode quebrar inteiro por falta de configuração do Supabase
+
+**DECISION**: `src/integrations/supabase/client.ts` nunca lança exceção no carregamento do módulo.
+Em vez disso exporta `isSupabaseConfigured: boolean`, e o layout raiz (`src/routes/__root.tsx`)
+mostra uma tela explicativa "Configuração pendente" quando `false`, em vez de renderizar a árvore
+de rotas (que não funcionaria mesmo).
+
+**CONTEXT**: A versão anterior lançava `throw new Error(...)` quando as variáveis de ambiente
+estavam ausentes. Como `client.ts` é importado por `src/lib/auth.tsx`, que é importado por
+`src/routes/__root.tsx` (o layout raiz, usado por toda rota), essa exceção derrubava a aplicação
+inteira com um erro genérico do TanStack Start ("This page didn't load") — foi exatamente o que
+aconteceu no preview do Lovable logo após o merge do PR #1, quando as variáveis de ambiente ainda
+não estavam configuradas do lado do Lovable.
+
+**OPTIONS**: (1) Manter o `throw` (falha rápida, mas derruba tudo); (2) nunca lançar, expor um
+estado `isSupabaseConfigured` e tratar graciosamente na camada mais alta que realmente decide o que
+renderizar.
+
+**CHOICE**: Opção 2.
+
+**WHY**: Uma configuração ausente é um estado esperado e recuperável (acontece em previews recém-
+criados, ambientes de CI, forks), não deveria ter o mesmo tratamento que um bug real. Mostrar uma
+mensagem clara e específica ("Configuração pendente", com os nomes exatos das variáveis faltando) é
+mais útil — para o dono do produto e para qualquer engenheiro depois — do que um crash genérico.
+
+**CONSEQUENCES**: Todo consumidor do cliente Supabase deve, em princípio, lidar com a possibilidade
+de `isSupabaseConfigured` ser `false` — hoje isso é tratado uma única vez, no layout raiz, então o
+resto do app pode assumir que, se está renderizando, a configuração existe.
+
+---
+
 ## 2026-09-11 — Rotas autenticadas renderizadas só no cliente (`ssr: false`)
 
 **DECISION**: O layout `/_authenticated` (e tudo abaixo dele — Início, Biblioteca, Meu Cérebro,

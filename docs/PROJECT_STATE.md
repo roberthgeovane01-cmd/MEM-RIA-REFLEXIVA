@@ -11,8 +11,7 @@
 
 - Investigação completa do repositório real (TanStack Start + React 19 + Vite 8 + Tailwind 4 +
   shadcn/ui, scaffold do Lovable, gerenciado com bun).
-- Backend Supabase provisionado via integração nativa do Lovable (`enable_database`), projeto
-  `rplriacrdebmepnmjpqt`.
+- Backend Supabase provisionado via integração nativa do Lovable (`enable_database`, Lovable Cloud).
 - Schema legado herdado (de um projeto Supabase reaproveitado pelo Lovable, não relacionado a este
   produto) identificado e removido com autorização explícita do dono do produto — ver
   `docs/DECISIONS.md`.
@@ -53,10 +52,38 @@
   mostrar/ocultar senha funciona; alternância login↔criar conta funciona; layout responsivo
   (390px) sem overflow. Screenshots gerados durante a verificação (não commitados).
 - `typecheck`, `lint` e `build` de produção passam sem erros.
+- PR #1 (Fase 0 + Fase 1) e PR #2 (hotfix abaixo) mesclados no `main` — é o branch que o Lovable
+  sincroniza.
+
+**Pós-merge — incidente e correção (11/09/2026, mesmo dia)**
+
+- Ao abrir o preview no Lovable após o merge, o app quebrava inteiro ("This page didn't load") em
+  qualquer rota. Causa: `src/integrations/supabase/client.ts` lançava exceção no carregamento do
+  módulo quando `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` estavam ausentes, e esse
+  arquivo é importado pelo layout raiz — o erro derrubava a árvore inteira. Corrigido: o cliente
+  nunca mais lança erro; `isSupabaseConfigured` expõe o estado, e o layout raiz mostra uma tela
+  clara de "Configuração pendente" em vez de deixar cada rota quebrar (PR #2).
+- Investigando a causa raiz das variáveis ausentes, descobri algo importante sobre a arquitetura:
+  **o Lovable Cloud não expõe uma referência de projeto Supabase estável.** O projeto que eu
+  configurei manualmente na Fase 0 (usando a MCP do Supabase diretamente) deixou de ser o backend
+  realmente conectado — o Lovable já havia rebindado o app para outro backend gerenciado, sem aviso
+  visível para mim. Isso está documentado em detalhe em `docs/DECISIONS.md`.
+- Resolvido pedindo ao próprio agente do Lovable (via `mcp__Lovable__send_message`) para aplicar a
+  migration de `profiles` diretamente no backend que ele tem conectado (o único caminho que
+  realmente alcança o projeto certo). Ele precisou de `GRANT`s adicionais que um projeto Supabase
+  criado manualmente não precisaria — capturados de volta em `supabase/migrations/`. O Lovable
+  também gerou (e commitou direto no GitHub) `src/integrations/supabase/client.server.ts` e
+  `auth-middleware.ts` — scaffolding padrão dele para operações server-side, não usados ainda mas
+  mantidos (ver nota em `CLAUDE.md`).
+- **Fluxo de migrations adaptado**: daqui para frente, mudanças de schema são autoradas em
+  `supabase/migrations/` (fonte de verdade continua sendo o GitHub) e aplicadas pedindo ao agente
+  do Lovable para executá-las no backend que ele tem conectado — ver `CLAUDE.md` § "Como aplicar
+  migrations".
 
 ## Em andamento
 
-- Nenhuma tarefa de código em andamento no momento — Fase 1 fechada, aguardando início da Fase 2.
+- Nenhuma tarefa de código em andamento no momento — Fase 1 (+ hotfix pós-merge) fechada, aguardando
+  início da Fase 2.
 
 ## Próximo
 
@@ -68,24 +95,27 @@
 
 ## Problemas conhecidos / dívida técnica
 
-- **Login de verdade ainda não foi testado ponta a ponta com a API real do Supabase** — o ambiente
-  de execução deste agente bloqueia conexões de saída diretas para `supabase.co` (política de
-  egress do sandbox, confirmada via `/root/.ccr/README.md`; não é um problema do app). A parte de
-  banco (schema, RLS, trigger) foi verificada diretamente via MCP do Supabase; a parte de UI foi
-  verificada em navegador real. O que falta verificar é a chamada HTTP real de login/cadastro —
-  recomendo testar isso assim que o app estiver rodando fora deste sandbox (preview do Lovable, ou
-  ambiente local do dono do produto).
+- **Login de verdade ainda não foi testado por mim ponta a ponta com a API real do Supabase** — o
+  ambiente de execução deste agente bloqueia conexões de saída diretas para `*.supabase.co`
+  (política de egress do sandbox, confirmada via `/root/.ccr/README.md`; não é um problema do
+  app). O agente do Lovable confirmou schema, RLS e alcançabilidade corretos no backend realmente
+  conectado; a UI foi verificada em navegador real neste sandbox. O que ainda falta é alguém (o
+  dono do produto, ou o preview do Lovable) confirmar visualmente que cadastro/login funcionam de
+  ponta a ponta no ambiente real.
+- **`supabase/migrations/` agora tem duas "gerações"**: `20260911171930`/`20260911172057` foram
+  aplicadas a um projeto Supabase (`rplriacrdebmepnmjpqt`) que o Lovable Cloud não usa mais como
+  backend conectado — ficam como registro histórico, não como schema vigente.
+  `20260911181444`/`20260911181504`/`20260911181518` (nomes UUID, geradas pelo próprio Lovable)
+  são as que refletem o backend realmente conectado hoje. Mantidas as duas por transparência — ver
+  `docs/DECISIONS.md`.
 - **Decisão a revisar com o dono do produto**: a tela de login expõe autocadastro público ("Criar
   conta") sem convite — ver `docs/DECISIONS.md` (2026-09-11) para o raciocínio e como reverter se
   não for o comportamento desejado para um app pessoal.
 - MR-07 (Criar Reflexão) ainda não foi recebido como documento funcional dedicado — pedir ao dono
   do produto antes de especificar esse módulo em detalhe.
 - Aviso do Supabase Advisor **"Leaked Password Protection Disabled"** (nível WARN, categoria Auth)
-  ainda não resolvido — é uma configuração do painel Supabase (Auth → Providers → Password), não
-  uma migration SQL.
-- `supabase` CLI não está disponível neste ambiente de execução — migrations foram aplicadas via
-  MCP do Supabase e espelhadas manualmente como arquivos locais. Ao trabalhar num ambiente com a
-  CLI disponível, rodar `supabase link` e conferir `supabase migration list`.
+  — não confirmado se ainda se aplica ao backend atual (o advisor foi rodado contra o projeto
+  antigo). Verificar de novo quando houver acesso ao projeto realmente conectado.
 - O dev server local só sobe em IPv4 explícito neste sandbox (`vite dev --host 127.0.0.1 --port
 8080`) porque o binding IPv6 padrão do scaffold Lovable (`host: "::"`) não é suportado aqui —
   não é um problema do código, apenas uma particularidade deste ambiente de execução.
@@ -96,4 +126,7 @@
 
 - Confirmar com o dono do produto se o autocadastro público em `/login` deve continuar ou ser
   restrito (ver `docs/DECISIONS.md`).
-- Nenhuma outra decisão bloqueante pendente.
+- Avaliar se vale a pena migrar de "Lovable Cloud" (backend gerenciado, sem referência estável)
+  para a integração "Supabase" separada do Lovable (conectar um projeto Supabase explícito e
+  estável) — ganharia previsibilidade, ao custo de um passo de configuração manual. Ver
+  `docs/DECISIONS.md`.
