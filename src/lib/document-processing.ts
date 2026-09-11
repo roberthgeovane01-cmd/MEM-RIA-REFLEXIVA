@@ -1,10 +1,11 @@
 // Fase 3 — Ingestão pipeline orchestration. See docs/DECISIONS.md
-// (11/09/2026, "Fase 3 — pipeline síncrono no cliente") for why this runs
-// as a fire-and-forget client-side task instead of a Supabase Edge
-// Function/queue: structuring + chunking are deterministic and need no
-// AI provider or secret, so there's nothing here that has to live on the
-// backend yet. That changes at the embedding/memory-extraction steps
-// (Fase 4+), which do call an AI provider and must move server-side then.
+// (11/09/2026, "Fase 3 — pipeline síncrono no cliente") for why structuring
+// + chunking run as a fire-and-forget client-side task instead of a
+// Supabase Edge Function/queue: they're deterministic and need no AI
+// provider or secret. Once this reaches 'completed', it hands off to the
+// `generate-embeddings` Edge Function (Fase 4) — the first pipeline step
+// that genuinely needs a backend, since it calls OpenAI with a secret that
+// can't live in the browser.
 
 import { supabase } from "@/integrations/supabase/client";
 import { buildChunks, buildSections } from "@/lib/document-structuring";
@@ -124,6 +125,16 @@ export async function runIngestionPipeline(params: {
       progress: 100,
       finished_at: new Date().toISOString(),
     });
+
+    // Fase 4 — RAG: fire-and-forget hand-off. If the Edge Function isn't
+    // deployed yet or OPENAI_API_KEY isn't configured, this just logs and
+    // the item stays 'completed' without embeddings — full-text search
+    // still works, only the semantic half of the hybrid search is skipped.
+    void supabase.functions
+      .invoke("generate-embeddings", { body: { libraryItemId } })
+      .catch((err) => {
+        console.error("generate-embeddings invocation failed:", err);
+      });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erro desconhecido no processamento.";
     try {

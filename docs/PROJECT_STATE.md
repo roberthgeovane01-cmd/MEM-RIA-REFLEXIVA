@@ -3,9 +3,9 @@
 > Atualizar ao final de cada etapa significativa. Esta é a fonte de verdade sobre "onde paramos",
 > não a memória da conversa.
 
-**Fase atual**: Fase 3 — Ingestão **concluída e confirmada com dado real** pelo dono do produto no
-preview do Lovable em 11/09/2026 (item processado, 1 seção, 60 chunks, status `completed`). Fase 0,
-Fase 1, Fase 2 e Fase 3 confirmadas funcionando de ponta a ponta. Próximo passo: Fase 4 — RAG.
+**Fase atual**: Fase 4 — RAG (construída: embeddings via OpenAI + busca híbrida; aguardando o dono
+do produto cadastrar `OPENAI_API_KEY` e o Lovable aplicar a migration/deployar as Edge Functions).
+Fase 0, Fase 1, Fase 2 e Fase 3 confirmadas funcionando de ponta a ponta pelo dono do produto.
 
 ## Concluído
 
@@ -164,17 +164,42 @@ Fase 1, Fase 2 e Fase 3 confirmadas funcionando de ponta a ponta. Próximo passo
   diretamente no banco (`mcp__Lovable__query_database`): `processing_status = completed`,
   `job_status = completed`, `progress = 100`, 1 seção, 60 chunks, sem erro.
 
+**Fase 4 — RAG**
+
+- Provedor de embeddings escolhido pelo dono do produto (pergunta feita via `AskUserQuestion`):
+  OpenAI `text-embedding-3-small`. Ver `docs/DECISIONS.md` para o raciocínio completo e para o
+  incidente de segurança durante a configuração (chave colada no chat, tratada como comprometida —
+  ver também `docs/SECURITY.md` § Segredos).
+- Migration `20260911210000_create_hybrid_search.sql`: extensão `pgvector` (já habilitada pelo
+  Lovable, v0.8.2, schema `extensions`), colunas `embedding`/`embedding_model`/`embedding_version`
+  em `document_chunks`, índice HNSW, função `search_document_chunks` (`SECURITY INVOKER`, fusão por
+  Reciprocal Rank Fusion entre `search_vector` e `embedding`).
+- `supabase/functions/`: primeiras Edge Functions do projeto.
+  `_shared/embedding-provider.ts` (o `EmbeddingProvider`, chama a API da OpenAI),
+  `generate-embeddings` (embeda os chunks pendentes de um item, chamada fire-and-forget pelo
+  cliente assim que a Fase 3 chega a `completed` — `src/lib/document-processing.ts`), `search`
+  (embeda a consulta e chama a RPC). Nenhuma das duas usa `service_role` — ambas autenticam como
+  quem chamou, então RLS já restringe tudo ao próprio dono.
+- `src/hooks/use-search.ts` (`useSearchContent`) e `/library`: campo de busca ganhou um botão
+  "Buscar no conteúdo" que chama a Edge Function `search` e mostra os trechos encontrados com a
+  fonte (título do documento + seção, link para `/library/$id`) — fecha o primeiro vertical slice
+  do roadmap (login → upload → armazenar → processar → chunks → buscar → mostrar resultado com
+  fonte).
+- `bun run typecheck`/`lint`/`build` passam limpos (Edge Functions ficam fora do `tsconfig`/ESLint
+  do app — são Deno, não Vite/React).
+
 ## Em andamento
 
-- Nenhum item aberto na Fase 3. Próximo passo é iniciar a Fase 4.
+- Aguardando o dono do produto cadastrar `OPENAI_API_KEY` em Project Settings → Secrets no editor
+  do Lovable, e o agente do Lovable aplicar `20260911210000_create_hybrid_search.sql` + deployar
+  `generate-embeddings` e `search`. Depois disso: criar um item novo no preview, ver o embedding
+  rodar (status passa por `embedding` e volta a `completed`), e testar "Buscar no conteúdo".
 
 ## Próximo
 
-1. **Fase 4 — RAG**: `chunk_embeddings` (ou embutido em `document_chunks`), full-text search sobre
-   `document_chunks.search_vector` (já existe), busca híbrida, `EmbeddingProvider` — primeiro passo
-   que precisa de segredo de IA, logo primeiro passo que precisa mesmo de backend real (Edge
-   Function), fechando o primeiro vertical slice completo — login → upload → armazenar → processar
-   → chunks → buscar → mostrar resultado com fonte.
+1. Confirmar a Fase 4 com o dono do produto (upload → embeddings → busca com resultado e fonte).
+2. Considerar Fase 5 — Memória (extração de memórias com IA), ou reforços da Fase 4 (reprocessar
+   itens antigos sem embeddings, deep-link para o trecho exato dentro de `/library/$id`).
 
 ## Problemas conhecidos / dívida técnica
 
