@@ -306,3 +306,69 @@ escolher um modelo/tokenizer real. `document_chunks.page_start`/`page_end` e
 (`src/lib/document-extraction.ts`) já junta todas as páginas num único texto antes deste pipeline
 rodar, então a proveniência por página ainda não é rastreada no nível de chunk/seção (só no nível
 do arquivo). Melhorar isso é um passo futuro independente, não bloqueia a Fase 3.
+
+**Nota (Fase 4)**: a frase acima sobre "Edge Function com `service_role`" antecipava mal o desenho —
+na implementação real (ver decisão seguinte), a Edge Function usa o JWT do próprio usuário, não
+`service_role`. RLS sozinha já basta.
+
+---
+
+## 2026-09-11 — Fase 4 (RAG): OpenAI para embeddings, embutidos em `document_chunks`, busca híbrida via RPC `SECURITY INVOKER`
+
+**DECISION**: Usar OpenAI `text-embedding-3-small` (1536 dimensões) como `EmbeddingProvider`; guardar
+o vetor diretamente em `document_chunks.embedding` (colunas `embedding_model`/`embedding_version`
+junto, em vez de uma tabela `chunk_embeddings` separada); implementar a busca híbrida como uma
+função SQL (`search_document_chunks`, fusão por Reciprocal Rank Fusion — RRF) chamada por uma Edge
+Function `search`; gerar os embeddings numa Edge Function separada (`generate-embeddings`), acionada
+pelo cliente logo que o pipeline síncrono da Fase 3 chega a `completed`.
+
+**CONTEXT**: Este é o primeiro passo do pipeline que precisa de um provedor de IA com segredo —
+`OPENAI_API_KEY` nunca pode existir no navegador (`docs/SECURITY.md`), então a execução
+obrigatoriamente muda de camada aqui, exatamente como antecipado na decisão da Fase 3. O dono do
+produto escolheu o provedor explicitamente (pergunta feita via `AskUserQuestion`, três opções
+apresentadas: OpenAI, Voyage AI, Google Gemini) e optou por usar a própria chave da OpenAI em vez do
+AI Gateway do Lovable.
+
+**Incidente de segurança durante a configuração**: o dono do produto colou uma chave de API real da
+OpenAI diretamente numa resposta de chat. Isso nunca foi gravado em nenhum arquivo, commit ou outra
+chamada de ferramenta — tratado como comprometido na hora: pedimos para ele revogar a chave colada,
+gerar uma nova, e cadastrá-la ele mesmo direto em **Project Settings → Secrets** no editor do
+Lovable (confirmado pelo próprio agente do Lovable como o caminho correto), nunca de volta pelo
+chat. Ver `docs/SECURITY.md` § Segredos para a regra registrada a partir disso.
+
+**OPTIONS** (provedor): (1) OpenAI `text-embedding-3-small` — mais barato, mais documentado em
+tutoriais de RAG com Supabase; (2) Voyage AI `voyage-multilingual-2` — parceiro de embeddings
+recomendado pela Anthropic; (3) Google Gemini `text-embedding-004`. **OPTIONS** (armazenamento):
+(1) `chunk_embeddings` separada, como o modelo de dados documenta; (2) coluna `embedding` embutida
+em `document_chunks`, opção que o próprio `docs/DATA_MODEL.md` já permite explicitamente "se
+simplificar a arquitetura". **OPTIONS** (execução do embedding): (1) Edge Function isolada, chamada
+pelo cliente; (2) trigger/webhook de banco disparando automaticamente quando `processing_status`
+vira `completed` pela primeira vez.
+
+**CHOICE**: OpenAI (escolha do dono do produto); embutido em `document_chunks` (opção 2); Edge
+Function chamada pelo cliente (opção 1).
+
+**WHY**: Embutir na própria tabela evita um `join` que não traria benefício real — este projeto
+nunca compara embeddings de mais de um modelo ao mesmo tempo (regra do `docs/DATA_MODEL.md`), então
+não há necessidade de uma tabela historizando várias gerações de embedding por chunk. Chamar a Edge
+Function pelo cliente (em vez de um trigger/webhook) segue a mesma lógica de "não construir 50% do
+módulo" da Fase 3: um trigger de banco exigiria configurar `pg_net`/webhooks antes de haver qualquer
+uso real disso, e o padrão fire-and-forget já está estabelecido e funcionando. A função de busca é
+`SECURITY INVOKER` (o padrão do Postgres, não declarado `SECURITY DEFINER`) para que RLS continue
+sendo aplicada normalmente em cada tabela que ela consulta — nenhuma das duas Edge Functions usa
+`service_role`; ambas criam um cliente Supabase autenticado com o JWT de quem chamou, então toda
+leitura/escrita já é automaticamente restrita ao próprio dono pelas policies existentes (princípio
+de menor privilégio, `docs/SECURITY.md`). RRF (em vez de soma ponderada de `ts_rank` + similaridade
+de cosseno) evita ter que normalizar duas métricas que vivem em escalas completamente diferentes.
+
+**CONSEQUENCES**: Trocar de provedor no futuro significa reimplementar só
+`supabase/functions/_shared/embedding-provider.ts` — nenhum outro arquivo muda. Trocar de MODELO (ou
+de dimensão) exige reembutir todos os chunks existentes (bump em `EMBEDDING_VERSION`, e uma migration
+de dados) — nunca comparar vetores de versões diferentes na mesma busca, e a Fase 4 ainda não tem
+esse reprocessamento em massa automatizado (fica para quando for realmente necessário). Já que o
+embedding de cada chunk só é gerado depois que a Fase 3 termina (fire-and-forget, sem `await`), um
+item pode ficar momentaneamente em `completed` sem embeddings ainda — a metade léxica (full-text) da
+busca híbrida já funciona nesse intervalo, só a metade semântica fica incompleta até a Edge Function
+terminar. Índice HNSW (não `ivfflat`) porque constrói incrementalmente — certo para uma biblioteca
+que começa vazia e cresce documento a documento, ao contrário do `ivfflat`, que quer dados presentes
+de antemão para treinar bem.

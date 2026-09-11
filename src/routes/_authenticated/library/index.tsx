@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookOpen, Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { BookOpen, Loader2, Plus, Search, Sparkles } from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLibraryItems } from "@/hooks/use-library";
+import { useSearchContent } from "@/hooks/use-search";
 
 export const Route = createFileRoute("/_authenticated/library/")({
   head: () => ({ meta: [{ title: "Memória Reflexiva | Biblioteca" }] }),
@@ -46,6 +48,7 @@ const STATUS_LABELS: Record<string, string> = {
 function LibraryPage() {
   const { data: items, isLoading } = useLibraryItems();
   const [query, setQuery] = useState("");
+  const contentSearch = useSearchContent();
 
   const filtered = useMemo(() => {
     if (!items) return [];
@@ -58,6 +61,12 @@ function LibraryPage() {
         item.tags.some((tag) => tag.toLowerCase().includes(q)),
     );
   }, [items, query]);
+
+  const handleContentSearch = (event: FormEvent) => {
+    event.preventDefault();
+    if (!query.trim()) return;
+    contentSearch.mutate(query.trim());
+  };
 
   return (
     <div className="fade-up">
@@ -102,23 +111,86 @@ function LibraryPage() {
         </div>
       ) : (
         <>
-          <div className="relative mt-8 max-w-sm">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar por título, categoria ou tag…"
-              className="pl-9"
-              aria-label="Buscar na biblioteca"
-            />
-          </div>
+          <form onSubmit={handleContentSearch} className="mt-8 flex max-w-lg flex-wrap gap-2">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Buscar por título, categoria, tag ou conteúdo…"
+                className="pl-9"
+                aria-label="Buscar na biblioteca"
+              />
+            </div>
+            <Button
+              type="submit"
+              variant="outline"
+              disabled={!query.trim() || contentSearch.isPending}
+            >
+              {contentSearch.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Sparkles className="size-4" aria-hidden="true" />
+              )}
+              Buscar no conteúdo
+            </Button>
+          </form>
 
           <p className="mt-4 text-xs text-muted-foreground">
             {filtered.length} {filtered.length === 1 ? "item" : "itens"}
           </p>
+
+          {contentSearch.isError && (
+            <p className="mt-4 text-sm text-destructive">
+              Não foi possível buscar no conteúdo:{" "}
+              {contentSearch.error instanceof Error
+                ? contentSearch.error.message
+                : "erro desconhecido"}
+              .
+            </p>
+          )}
+
+          {contentSearch.data && (
+            <section className="mt-4 rounded-2xl border border-border bg-card p-5">
+              <h2 className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-primary">
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                Resultados no conteúdo
+              </h2>
+              {contentSearch.data.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Nenhum trecho encontrado para "{query}".
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-3">
+                  {contentSearch.data.map((result) => (
+                    <li key={result.chunk_id}>
+                      <Link
+                        to="/library/$id"
+                        params={{ id: result.library_item_id }}
+                        className="block rounded-xl p-3 transition-colors hover:bg-secondary/50"
+                      >
+                        <p className="text-sm font-medium text-card-foreground">
+                          {result.library_item_title}
+                          {result.section_title && (
+                            <span className="font-normal text-muted-foreground">
+                              {" "}
+                              · {result.section_title}
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                          {result.content}
+                        </p>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
 
           {filtered.length === 0 ? (
             <p className="mt-6 text-sm text-muted-foreground">

@@ -20,7 +20,11 @@
       Estruturação e chunking rodam no cliente, não numa fila/Edge Function — ver
       `docs/DECISIONS.md`. **Confirmada pelo dono do produto** com dado real no preview do Lovable
       em 11/09/2026 — ver `docs/PROJECT_STATE.md`.
-- [ ] **Fase 4 — RAG**: `chunk_embeddings`, full-text search, busca híbrida, evidências.
+- [x] **Fase 4 — RAG**: embeddings (OpenAI, embutidos em `document_chunks`), full-text search
+      (já existia desde a Fase 3), busca híbrida (RRF via RPC `search_document_chunks`),
+      `EmbeddingProvider` abstraído. Primeiras Edge Functions do projeto
+      (`generate-embeddings`, `search`) — ver `docs/DECISIONS.md`. Aguardando o dono do produto
+      cadastrar `OPENAI_API_KEY` e confirmar no preview do Lovable.
 - [ ] **Fase 5 — Memória**: `memory_items`, `memory_evidence`, `memory_relations`.
 - [ ] **Fase 6 — Meu Cérebro**: `author_traits`, `author_profile_versions`, evidências, feedback.
 - [ ] **Fase 7 — Reflexões**: fluxo de 8–9 etapas, retrieval auditável, conflitos, plano, geração,
@@ -34,8 +38,8 @@
 LOGIN → UPLOAD TXT → ARMAZENAR → PROCESSAR → CRIAR CHUNKS → BUSCAR → MOSTRAR RESULTADO COM FONTE
 ```
 
-Ampliação de formatos (DOCX, PDF com camada de texto) concluída na Fase 2. Estrutura + chunks
-(Fase 3) concluídos — falta a Fase 4 (busca) para fechar a cadeia completa.
+Cadeia completa implementada: ampliação de formatos (Fase 2), estrutura + chunks (Fase 3), busca
+híbrida com resultado e fonte (Fase 4). Falta a confirmação do dono do produto no preview.
 
 ## Segundo vertical slice
 
@@ -50,7 +54,8 @@ módulo em detalhe (ver `docs/specs/README.md`).
 
 ## Próximo passo concreto
 
-1. Iniciar a **Fase 4 — RAG**: `chunk_embeddings` (ou embutido em `document_chunks`), full-text
-   search sobre `document_chunks.search_vector` (já existe desde a Fase 3), busca híbrida, camada de
-   IA (`EmbeddingProvider`) — este é o primeiro passo que precisa mover execução para o backend
-   (segredo de provedor de IA), ver `docs/DECISIONS.md`.
+1. Dono do produto cadastra `OPENAI_API_KEY` (Project Settings → Secrets no Lovable); Lovable aplica
+   a migration da Fase 4 e deploya `generate-embeddings`/`search`.
+2. Confirmar a Fase 4 no preview: criar um item, ver o embedding rodar, testar "Buscar no conteúdo".
+3. Depois: Fase 5 — Memória, ou reforços da Fase 4 (reprocessar itens antigos sem embeddings,
+   deep-link para o trecho exato dentro de `/library/$id`).

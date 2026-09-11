@@ -19,12 +19,13 @@
 
 ## Status atual
 
-| Tabela                                                    | Status                                                                                                        |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `profiles`                                                | ✅ Migrada (Fase 0 — fundação de autenticação)                                                                |
-| `library_items`, `library_files`                          | ✅ Migradas (Fase 2 — Biblioteca)                                                                             |
-| `document_sections`, `document_chunks`, `processing_jobs` | ✅ Migradas (Fase 3 — Ingestão). Execução do pipeline roda no cliente por enquanto — ver `docs/DECISIONS.md`. |
-| Todas as demais abaixo                                    | 📋 Planejada — serão migradas fase a fase (RAG → Memória → Meu Cérebro → Reflexões), nunca todas de uma vez   |
+| Tabela                                                    | Status                                                                                                         |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `profiles`                                                | ✅ Migrada (Fase 0 — fundação de autenticação)                                                                 |
+| `library_items`, `library_files`                          | ✅ Migradas (Fase 2 — Biblioteca)                                                                              |
+| `document_sections`, `document_chunks`, `processing_jobs` | ✅ Migradas (Fase 3 — Ingestão). Execução do pipeline roda no cliente por enquanto — ver `docs/DECISIONS.md`.  |
+| `document_chunks.embedding` (+ busca híbrida via RPC)     | ✅ Migrada (Fase 4 — RAG). Embutido em `document_chunks`, não em `chunk_embeddings` — ver `docs/DECISIONS.md`. |
+| Todas as demais abaixo                                    | 📋 Planejada — serão migradas fase a fase (Memória → Meu Cérebro → Reflexões), nunca todas de uma vez          |
 
 ---
 
@@ -117,18 +118,29 @@ Estados de processamento (usar sempre, nunca só "Carregando..."):
 
 ## Fase 4 — RAG (embeddings + busca híbrida)
 
-### `chunk_embeddings`
+> Implementada — ver `docs/DECISIONS.md` (11/09/2026, "Fase 4: OpenAI para embeddings, embutidos em
+> document_chunks, busca híbrida via RPC SECURITY INVOKER") para o raciocínio completo.
+
+### `document_chunks.embedding` (em vez de `chunk_embeddings` separada)
 
 ```text
-id, owner_id, chunk_id, embedding, embedding_model, embedding_version, created_at
+document_chunks.embedding           vector(1536) — text-embedding-3-small (OpenAI)
+document_chunks.embedding_model     text
+document_chunks.embedding_version   text
 ```
 
-Pode ser embutida diretamente em `document_chunks` se simplificar a arquitetura — decisão a tomar
-na implementação (registrar em `docs/DECISIONS.md` quando escolhida).
+Decisão tomada na implementação (opção já prevista aqui): embutir diretamente em `document_chunks`
+em vez de uma tabela `chunk_embeddings` separada, já que este projeto nunca compara embeddings de
+mais de um modelo ao mesmo tempo. `supabase/functions/generate-embeddings` preenche essas colunas
+depois que a Fase 3 termina; `supabase/functions/_shared/embedding-provider.ts` é o
+`EmbeddingProvider` (trocar de provedor = reimplementar só esse arquivo).
 
-Busca híbrida = full-text search + vector search + metadados + filtros + rank fusion. Nunca
-"apenas top-K vector search". Toda memória recuperada respeita RLS (pgvector roda sobre o mesmo
-Postgres, com as mesmas policies).
+Busca híbrida = full-text search (`document_chunks.search_vector`, já existe desde a Fase 3) +
+vector search (`document_chunks.embedding`, pgvector/HNSW) fundidos por Reciprocal Rank Fusion —
+função SQL `search_document_chunks` (`SECURITY INVOKER`, então RLS de `document_chunks`/
+`library_items`/`document_sections` continua valendo normalmente), chamada pela Edge Function
+`search`. Nunca "apenas top-K vector search". Toda busca respeita RLS (pgvector roda sobre o mesmo
+Postgres, com as mesmas policies) — nenhuma das duas Edge Functions usa `service_role`.
 
 ---
 

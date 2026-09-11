@@ -38,6 +38,14 @@ perfil autoral como evidência de estilo — apenas como referência de conhecim
   Supabase Secrets / variáveis de ambiente de Edge Functions — nunca como `VITE_*`.
 - `VITE_SUPABASE_PUBLISHABLE_KEY` **não é secreta** — é a chave pública do projeto, protegida pelas
   policies de RLS, não por estar escondida.
+- **Nunca aceitar um segredo (chave de API, token, senha) colado diretamente numa mensagem de
+  chat/agente** — mesmo que a intenção seja "só para eu configurar". Uma chave assim já entra no
+  histórico da conversa, que não é armazenamento seguro. Se isso acontecer: (1) não gravar o valor
+  em nenhum arquivo, commit ou outra chamada de ferramenta; (2) orientar o dono a revogar/regenerar
+  a chave no provedor; (3) a chave nova é cadastrada por ele mesmo direto no painel de Secrets do
+  backend (aqui, Project Settings → Secrets no editor do Lovable), nunca repassada por chat. Caso
+  real: 11/09/2026, chave da OpenAI colada durante a configuração da Fase 4 — tratada como
+  comprometida, dono do produto revogou e cadastrou uma nova diretamente no painel.
 
 ## Storage
 
