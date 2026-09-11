@@ -19,6 +19,9 @@ export type Database = {
           chunk_index: number
           content: string
           created_at: string
+          embedding: string | null
+          embedding_model: string | null
+          embedding_version: string | null
           id: string
           library_item_id: string
           metadata: Json
@@ -33,6 +36,9 @@ export type Database = {
           chunk_index: number
           content: string
           created_at?: string
+          embedding?: string | null
+          embedding_model?: string | null
+          embedding_version?: string | null
           id?: string
           library_item_id: string
           metadata?: Json
@@ -47,6 +53,9 @@ export type Database = {
           chunk_index?: number
           content?: string
           created_at?: string
+          embedding?: string | null
+          embedding_model?: string | null
+          embedding_version?: string | null
           id?: string
           library_item_id?: string
           metadata?: Json
@@ -321,7 +330,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      search_document_chunks: {
+        Args: {
+          match_count?: number
+          query_embedding: string
+          search_query: string
+        }
+        Returns: {
+          chunk_id: string
+          combined_score: number
+          content: string
+          library_item_id: string
+          library_item_title: string
+          section_title: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
