@@ -73,8 +73,8 @@ function AddContentPage() {
       </p>
       <h1 className="mt-4 font-serif text-3xl text-foreground">Adicionar conteúdo</h1>
       <p className="mt-2 max-w-md text-sm text-muted-foreground">
-        O original é preservado sem alterações. No momento, aceitamos texto colado ou arquivos
-        .txt/.md — mais formatos chegam em breve.
+        O original é preservado sem alterações. Aceitamos texto colado ou arquivos .txt, .md, .pdf e
+        .docx. PDFs escaneados (sem camada de texto) ainda não são suportados.
       </p>
 
       <form
@@ -197,7 +197,7 @@ function AddContentPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".txt,.md,text/plain,text/markdown"
+                accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
                 className="hidden"
                 id="file-input"
@@ -210,7 +210,7 @@ function AddContentPage() {
                 {selectedFile ? (
                   <span className="text-foreground">{selectedFile.name}</span>
                 ) : (
-                  <span>Clique para escolher um arquivo .txt ou .md</span>
+                  <span>Clique para escolher um arquivo .txt, .md, .pdf ou .docx</span>
                 )}
               </label>
             </div>

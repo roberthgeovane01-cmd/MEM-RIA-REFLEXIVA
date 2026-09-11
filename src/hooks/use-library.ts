@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { detectExtension, extractText } from "@/lib/document-extraction";
 
 export type LibraryItemType =
   "book" | "reflection" | "letter" | "report" | "message" | "note" | "document" | "other";
@@ -56,7 +57,7 @@ export function useLibraryItem(id: string) {
   });
 }
 
-const MAX_TEXT_SIZE_BYTES = 5 * 1024 * 1024; // 5MB — generous for plain text/markdown.
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20MB — generous for text, PDF and DOCX.
 
 export type NewLibraryItemInput = {
   title: string;
@@ -81,13 +82,11 @@ function validateNewLibraryItem(input: NewLibraryItemInput) {
 
   if (hasFile) {
     const file = input.file!;
-    const allowed = [".txt", ".md"];
-    const isAllowedType = allowed.some((ext) => file.name.toLowerCase().endsWith(ext));
-    if (!isAllowedType) {
-      throw new Error("No momento, só arquivos .txt e .md são aceitos.");
+    if (!detectExtension(file.name)) {
+      throw new Error("Formato não suportado. Aceitamos .txt, .md, .pdf e .docx.");
     }
     if (file.size === 0) throw new Error("O arquivo está vazio.");
-    if (file.size > MAX_TEXT_SIZE_BYTES) throw new Error("Arquivo maior que 5MB.");
+    if (file.size > MAX_FILE_SIZE_BYTES) throw new Error("Arquivo maior que 20MB.");
   }
 }
 
@@ -114,7 +113,7 @@ async function createLibraryItem(ownerId: string, input: NewLibraryItemInput) {
   try {
     const filename = input.file ? input.file.name : `${input.title.trim() || "reflexao"}.txt`;
     const blob = input.file ?? new Blob([input.pastedText ?? ""], { type: "text/plain" });
-    const text = input.file ? await input.file.text() : (input.pastedText ?? "");
+    const text = input.file ? await extractText(input.file) : (input.pastedText ?? "").trim();
     const storagePath = `${ownerId}/${item.id}/${filename}`;
 
     const { error: uploadError } = await supabase.storage
