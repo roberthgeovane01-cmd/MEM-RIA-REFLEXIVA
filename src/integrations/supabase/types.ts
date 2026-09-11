@@ -14,6 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
+      document_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          id: string
+          library_item_id: string
+          metadata: Json
+          owner_id: string
+          page_end: number | null
+          page_start: number | null
+          search_vector: unknown
+          section_id: string | null
+          token_count: number | null
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          created_at?: string
+          id?: string
+          library_item_id: string
+          metadata?: Json
+          owner_id: string
+          page_end?: number | null
+          page_start?: number | null
+          search_vector?: unknown
+          section_id?: string | null
+          token_count?: number | null
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          id?: string
+          library_item_id?: string
+          metadata?: Json
+          owner_id?: string
+          page_end?: number | null
+          page_start?: number | null
+          search_vector?: unknown
+          section_id?: string | null
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_chunks_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "document_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_sections: {
+        Row: {
+          created_at: string
+          end_page: number | null
+          id: string
+          library_item_id: string
+          metadata: Json
+          owner_id: string
+          parent_section_id: string | null
+          section_type: string
+          sequence: number
+          start_page: number | null
+          text_content: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          end_page?: number | null
+          id?: string
+          library_item_id: string
+          metadata?: Json
+          owner_id: string
+          parent_section_id?: string | null
+          section_type: string
+          sequence?: number
+          start_page?: number | null
+          text_content: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          end_page?: number | null
+          id?: string
+          library_item_id?: string
+          metadata?: Json
+          owner_id?: string
+          parent_section_id?: string | null
+          section_type?: string
+          sequence?: number
+          start_page?: number | null
+          text_content?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_sections_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_sections_parent_section_id_fkey"
+            columns: ["parent_section_id"]
+            isOneToOne: false
+            referencedRelation: "document_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       library_files: {
         Row: {
           checksum: string | null
@@ -121,6 +241,57 @@ export type Database = {
           title?: string
           updated_at?: string
           year?: number | null
+        }
+        Relationships: []
+      }
+      processing_jobs: {
+        Row: {
+          attempt_count: number
+          created_at: string
+          entity_id: string
+          entity_type: string
+          error_code: string | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          job_type: string
+          owner_id: string
+          progress: number
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type: string
+          owner_id: string
+          progress?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type?: string
+          owner_id?: string
+          progress?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
