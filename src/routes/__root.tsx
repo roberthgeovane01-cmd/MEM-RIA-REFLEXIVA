@@ -10,8 +10,25 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { isSupabaseConfigured } from "../integrations/supabase/client";
 import { AuthProvider } from "../lib/auth";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+
+function ConfigurationErrorScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+      <div className="max-w-md rounded-2xl border border-border bg-card p-6 text-center sm:p-8">
+        <h1 className="font-serif text-xl text-card-foreground">Configuração pendente</h1>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          As variáveis de ambiente do Supabase (<code>VITE_SUPABASE_URL</code> e{" "}
+          <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>) não foram encontradas. Sem elas, o app não
+          consegue se conectar ao backend — veja <code>.env.example</code> e{" "}
+          <code>docs/SECURITY.md</code> para configurar.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function NotFoundComponent() {
   return (
@@ -123,6 +140,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  if (!isSupabaseConfigured) {
+    // Fail loudly but gracefully: nothing in this app works without a
+    // configured backend, so show one clear screen instead of letting every
+    // route crash independently with a generic error boundary.
+    return <ConfigurationErrorScreen />;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
