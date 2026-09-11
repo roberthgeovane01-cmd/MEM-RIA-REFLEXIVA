@@ -3,7 +3,9 @@
 > Atualizar ao final de cada etapa significativa. Esta é a fonte de verdade sobre "onde paramos",
 > não a memória da conversa.
 
-**Fase atual**: Fase 1 — Auth + App Shell (concluída) → prestes a iniciar Fase 2 (Biblioteca).
+**Fase atual**: Fase 1 — Auth + App Shell (concluída e **confirmada funcionando de ponta a ponta
+pelo dono do produto** — login e cadastro reais testados no preview do Lovable em 11/09/2026) →
+Fase 2 (Biblioteca) em andamento.
 
 ## Concluído
 
@@ -95,13 +97,11 @@
 
 ## Problemas conhecidos / dívida técnica
 
-- **Login de verdade ainda não foi testado por mim ponta a ponta com a API real do Supabase** — o
-  ambiente de execução deste agente bloqueia conexões de saída diretas para `*.supabase.co`
-  (política de egress do sandbox, confirmada via `/root/.ccr/README.md`; não é um problema do
-  app). O agente do Lovable confirmou schema, RLS e alcançabilidade corretos no backend realmente
-  conectado; a UI foi verificada em navegador real neste sandbox. O que ainda falta é alguém (o
-  dono do produto, ou o preview do Lovable) confirmar visualmente que cadastro/login funcionam de
-  ponta a ponta no ambiente real.
+- ~~Login de verdade ainda não testado ponta a ponta~~ **Resolvido**: o dono do produto confirmou
+  em 11/09/2026 que login e cadastro funcionam no preview real do Lovable. No caminho, também foi
+  necessário habilitar "Email signups" no Auth do Supabase (estava desativado por padrão) — feito
+  pelo agente do Lovable. Confirmação por e-mail continua exigida por padrão antes do primeiro
+  login (comportamento padrão do Supabase Auth, não alterado).
 - **`supabase/migrations/` agora tem duas "gerações"**: `20260911171930`/`20260911172057` foram
   aplicadas a um projeto Supabase (`rplriacrdebmepnmjpqt`) que o Lovable Cloud não usa mais como
   backend conectado — ficam como registro histórico, não como schema vigente.

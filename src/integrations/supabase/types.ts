@@ -8,6 +8,116 @@ export type Database = {
   };
   public: {
     Tables: {
+      library_files: {
+        Row: {
+          checksum: string | null;
+          created_at: string;
+          extracted_text: string | null;
+          file_size: number;
+          id: string;
+          library_item_id: string;
+          mime_type: string;
+          original_filename: string;
+          owner_id: string;
+          storage_bucket: string;
+          storage_path: string;
+          version: number;
+        };
+        Insert: {
+          checksum?: string | null;
+          created_at?: string;
+          extracted_text?: string | null;
+          file_size: number;
+          id?: string;
+          library_item_id: string;
+          mime_type: string;
+          original_filename: string;
+          owner_id: string;
+          storage_bucket?: string;
+          storage_path: string;
+          version?: number;
+        };
+        Update: {
+          checksum?: string | null;
+          created_at?: string;
+          extracted_text?: string | null;
+          file_size?: number;
+          id?: string;
+          library_item_id?: string;
+          mime_type?: string;
+          original_filename?: string;
+          owner_id?: string;
+          storage_bucket?: string;
+          storage_path?: string;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_files_library_item_id_fkey";
+            columns: ["library_item_id"];
+            isOneToOne: false;
+            referencedRelation: "library_items";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      library_items: {
+        Row: {
+          authorship_type: string;
+          category: string | null;
+          created_at: string;
+          deleted_at: string | null;
+          description: string | null;
+          id: string;
+          item_type: string;
+          language: string | null;
+          memory_status: string | null;
+          original_date: string | null;
+          owner_id: string;
+          processing_status: string;
+          tags: string[];
+          title: string;
+          updated_at: string;
+          year: number | null;
+        };
+        Insert: {
+          authorship_type?: string;
+          category?: string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          description?: string | null;
+          id?: string;
+          item_type?: string;
+          language?: string | null;
+          memory_status?: string | null;
+          original_date?: string | null;
+          owner_id: string;
+          processing_status?: string;
+          tags?: string[];
+          title: string;
+          updated_at?: string;
+          year?: number | null;
+        };
+        Update: {
+          authorship_type?: string;
+          category?: string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          description?: string | null;
+          id?: string;
+          item_type?: string;
+          language?: string | null;
+          memory_status?: string | null;
+          original_date?: string | null;
+          owner_id?: string;
+          processing_status?: string;
+          tags?: string[];
+          title?: string;
+          updated_at?: string;
+          year?: number | null;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           created_at: string;
